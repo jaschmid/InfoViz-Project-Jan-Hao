@@ -152,8 +152,8 @@ namespace InfoVizProject
 
             public LineLayer()
             {
-                this.TimeSourceAxis = Axis.Y;
-                this.LineSourceAxis = Axis.Z;
+                this.TimeSourceAxis = Axis.Z;
+                this.LineSourceAxis = Axis.Y;
                 this.DataSourceAxis = Axis.X;
                 this.DataLineXIndex = 0;
                 this.DataLineYIndex = 1;
@@ -253,7 +253,7 @@ namespace InfoVizProject
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
                             lData[iTime].Z = ((float)data.GetValue(loc) - columnMinList[this.DataLineThicknessIndex]) / (columnMaxList[this.DataLineThicknessIndex] - columnMinList[this.DataLineThicknessIndex]);
                         }
-                        else lData[iTime].Z = 10.0f;
+                        else lData[iTime].Z = 1.0f;
 
                     }
 
