@@ -20,13 +20,17 @@ namespace InfoVizProject
     public partial class Form1 : Form
     {
         /*private data and components*/
-        private ExcelDataProvider excelDataProvider;
 
+        private int choroplethMapSelectedIndex;
+        private int choroplethMapCurrentYear = 1960;
+
+
+        private ExcelDataProvider excelDataProvider;
         private ChoroplethMap choroplethMap;  // world map component
         private MapData mapData;
         private MapBorderLayer mapBorderLayer;
         private MapPolygonLayer mapPolygonLayer;
-
+        private InteractiveColorLegend interactiveColorLegend;
         private StringIndexMapper stringIndexMapper;
 
         private ViewManager viewManager;
@@ -40,10 +44,47 @@ namespace InfoVizProject
             InitializeData();
             InitializeColor();
             InitializeStringIndexMapper();
+            InitializeInteractiveColorLegend(); // add color legend to choropleth map
             InitializeMap();
             InitializeCustomComponent();
 
+            ControlComponentHandle(); // to handle things ohter than initializing the contorl compoent.
+
+
             InitializeViewManager();
+
+            
+        }
+
+        private void ControlComponentHandle()
+        {
+            //throw new NotImplementedException();
+            foreach (var i in excelDataProvider.ColumnHeaders)
+            {
+                this.comboBox_choropleth.Items.Add(i);
+            }
+            this.comboBox_choropleth.SelectedIndex = choroplethMapSelectedIndex;
+
+            this.textBoxYear.Text = choroplethMapCurrentYear.ToString();
+            
+        }
+
+        private void InitializeInteractiveColorLegend()
+        {
+            //throw new NotImplementedException();
+            float[] edgeValues={0} ;
+            interactiveColorLegend = new InteractiveColorLegend();
+            interactiveColorLegend.ColorMap = colorMap;
+            interactiveColorLegend.EdgeValues = edgeValues;
+            interactiveColorLegend.UseRelativePosition = true;
+            interactiveColorLegend.SetPosition(0.1f,0.5f);
+            interactiveColorLegend.UseRelativeSize = true;
+            interactiveColorLegend.SetLegendSize(10,70);
+            interactiveColorLegend.SetHeader(excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex]);
+
+            
+            interactiveColorLegend.Enabled = true;
+            
             
         }
 
@@ -53,7 +94,7 @@ namespace InfoVizProject
             viewManager = new ViewManager(this);
             viewManager.Add(choroplethMap, splitContainer2.Panel1);
             viewManager.Add(component, splitContainer2.Panel2);
-            viewManager.InvalidateAll();
+            
 
         }
 
@@ -84,7 +125,7 @@ namespace InfoVizProject
         {
             colorMap = new ColorMap();
             colorMap.Input = excelDataProvider;
-            colorMap.Index = 1;
+            colorMap.Index = choroplethMapSelectedIndex;
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.CadetBlue,Color.GhostWhite));
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.GhostWhite,Color.Red));
             colorMap.AddColorMapPart(new LinearHsvColorMapPart(0, 360));
@@ -104,7 +145,9 @@ namespace InfoVizProject
             choroplethMap.Zoom = -(0.75f);
 
             choroplethMap.AddLayer(mapPolygonLayer);
+            
             choroplethMap.AddLayer(mapBorderLayer);
+            choroplethMap.AddSubComponent(interactiveColorLegend);
 
         }
 
@@ -112,6 +155,17 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             stringIndexMapper = new StringIndexMapper(mapData.RegionFullNames, excelDataProvider.RowIds);
+        }
+
+        private void comboBox_choropleth_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //string currentText = comboBox_choropleth.Text;
+            choroplethMapSelectedIndex = comboBox_choropleth.SelectedIndex;
+            colorMap.Index = choroplethMapSelectedIndex;
+            //mapPolygonLayer.Invalidate();
+            
+            interactiveColorLegend.SetHeader(excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex]);
+            choroplethMap.Invalidate();
         }
 
     }

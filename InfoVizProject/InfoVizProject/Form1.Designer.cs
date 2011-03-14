@@ -37,9 +37,10 @@
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.comboBox_choropleth = new System.Windows.Forms.ComboBox();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.textBoxYear = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -78,20 +79,23 @@
             // 
             // splitContainer2.Panel1
             // 
-            this.splitContainer2.Panel1.Controls.Add(this.comboBox1);
+            this.splitContainer2.Panel1.Controls.Add(this.textBoxYear);
+            this.splitContainer2.Panel1.Controls.Add(this.comboBox_choropleth);
             this.splitContainer2.Panel1.Controls.Add(this.trackBar1);
             this.splitContainer2.Size = new System.Drawing.Size(503, 562);
             this.splitContainer2.SplitterDistance = 313;
             this.splitContainer2.TabIndex = 0;
             // 
-            // comboBox1
+            // comboBox_choropleth
             // 
-            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(3, 12);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(121, 21);
-            this.comboBox1.TabIndex = 1;
+            this.comboBox_choropleth.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_choropleth.FormattingEnabled = true;
+            this.comboBox_choropleth.Location = new System.Drawing.Point(3, 12);
+            this.comboBox_choropleth.Name = "comboBox_choropleth";
+            this.comboBox_choropleth.Size = new System.Drawing.Size(121, 21);
+            this.comboBox_choropleth.TabIndex = 1;
+            this.comboBox_choropleth.TabStop = false;
+            this.comboBox_choropleth.SelectedIndexChanged += new System.EventHandler(this.comboBox_choropleth_SelectedIndexChanged);
             // 
             // trackBar1
             // 
@@ -111,6 +115,20 @@
             this.splitContainer3.Size = new System.Drawing.Size(277, 562);
             this.splitContainer3.SplitterDistance = 281;
             this.splitContainer3.TabIndex = 0;
+            // 
+            // textBoxYear
+            // 
+            this.textBoxYear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxYear.BackColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.textBoxYear.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBoxYear.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this.textBoxYear.Location = new System.Drawing.Point(401, 13);
+            this.textBoxYear.Name = "textBoxYear";
+            this.textBoxYear.ReadOnly = true;
+            this.textBoxYear.Size = new System.Drawing.Size(100, 13);
+            this.textBoxYear.TabIndex = 5;
+            this.textBoxYear.TabStop = false;
+            this.textBoxYear.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // Form1
             // 
@@ -140,8 +158,9 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.SplitContainer splitContainer3;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox comboBox_choropleth;
         private System.Windows.Forms.TrackBar trackBar1;
+        private System.Windows.Forms.TextBox textBoxYear;
 
     }
 }
