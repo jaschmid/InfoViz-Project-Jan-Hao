@@ -22,7 +22,7 @@ namespace InfoVizProject
 
         private ExcelDataProvider excelDataProvider;
         private ViewManager viewManager;
-        private SampleGavComponent component;
+        private CustomComponent component;
         private ColorMap colorMap;
 
         public Form1()
@@ -44,7 +44,7 @@ namespace InfoVizProject
             colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.Yellow, Color.Red));
 
             // Init custom component
-            component = new SampleGavComponent();
+            component = new CustomComponent();
             component.Input = excelDataProvider;
             component.ColorMap = colorMap;
 
