@@ -60,6 +60,7 @@ namespace InfoVizProject
 
             LineLayer lineLayer = new LineLayer();
             lineLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
+            
             layers.Add(lineLayer);
             /*
             TextLayer textLayer = new TextLayer();
