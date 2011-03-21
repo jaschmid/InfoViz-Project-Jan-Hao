@@ -23,9 +23,11 @@ namespace InfoVizProject
 
         private int choroplethMapSelectedIndex;
         private int choroplethMapCurrentYear = 1960;
+       
 
 
         private ExcelDataProvider excelDataProvider;
+        private YearSliceDataTransformer yearSliceDataTransformer;
         private ChoroplethMap choroplethMap;  // world map component
         private MapData mapData;
         private MapBorderLayer mapBorderLayer;
@@ -42,6 +44,7 @@ namespace InfoVizProject
             InitializeComponent();
 
             InitializeData();
+            InitializeDataTransformer();
             InitializeColor();
             InitializeStringIndexMapper();
             InitializeInteractiveColorLegend(); // add color legend to choropleth map
@@ -56,6 +59,14 @@ namespace InfoVizProject
             
         }
 
+        private void InitializeDataTransformer()
+        {
+            //throw new NotImplementedException();
+            yearSliceDataTransformer = new YearSliceDataTransformer();
+            yearSliceDataTransformer.Input = excelDataProvider;
+            yearSliceDataTransformer.CurrentSelectedYear = 1960;
+        }
+
         private void ControlComponentHandle()
         {
             //throw new NotImplementedException();
@@ -66,6 +77,11 @@ namespace InfoVizProject
             this.comboBox_choropleth.SelectedIndex = choroplethMapSelectedIndex;
 
             this.textBoxYear.Text = choroplethMapCurrentYear.ToString();
+
+            this.trackBarYearSelecter.SmallChange = 1;
+            this.trackBarYearSelecter.LargeChange = 10;
+            this.trackBarYearSelecter.Minimum = 1960;
+            this.trackBarYearSelecter.Maximum = 1975;
             
         }
 
@@ -73,6 +89,7 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             float[] edgeValues={0} ;
+            
             interactiveColorLegend = new InteractiveColorLegend();
             interactiveColorLegend.ColorMap = colorMap;
             interactiveColorLegend.EdgeValues = edgeValues;
@@ -81,7 +98,18 @@ namespace InfoVizProject
             interactiveColorLegend.UseRelativeSize = true;
             interactiveColorLegend.SetLegendSize(10,70);
             interactiveColorLegend.SetHeader(excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex]);
-
+            float [] globalEdge = {0.3f,0.4f};
+            List<float> postiton = new List<float>() ;
+            postiton.Add(0.2f);
+            interactiveColorLegend.SetValueSlider(postiton,InteractiveColorLegend.SliderLinePosition.Center,InteractiveColorLegend.TextPosition.RightOrBottom,true);
+            interactiveColorLegend.MinTextPosition = InteractiveColorLegend.TextPosition.RightOrBottom;
+            float min = 0;
+            float max = 0;
+            yearSliceDataTransformer.GetDataCube().GetColumnMaxMin(choroplethMapSelectedIndex, out max, out min);
+            interactiveColorLegend.MaxValue = max;
+            interactiveColorLegend.MinValue = min;
+            
+            interactiveColorLegend.ShowMinMaxValues = true;
             
             interactiveColorLegend.Enabled = true;
             
@@ -94,7 +122,7 @@ namespace InfoVizProject
             viewManager = new ViewManager(this);
             viewManager.Add(choroplethMap, splitContainer2.Panel1);
             viewManager.Add(component, splitContainer2.Panel2);
-            
+            viewManager.InvalidateAll();
 
         }
 
@@ -124,11 +152,12 @@ namespace InfoVizProject
         private void InitializeColor()
         {
             colorMap = new ColorMap();
-            colorMap.Input = excelDataProvider;
+            colorMap.Input = yearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.CadetBlue,Color.GhostWhite));
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.GhostWhite,Color.Red));
-            colorMap.AddColorMapPart(new LinearHsvColorMapPart(0, 360));
+            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(100,100,125),Color.FromArgb(255,255,255)));
+            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(255,255,255),Color.FromArgb(255,0,0)));
         }
 
         private void InitializeMap()
@@ -163,9 +192,39 @@ namespace InfoVizProject
             choroplethMapSelectedIndex = comboBox_choropleth.SelectedIndex;
             colorMap.Index = choroplethMapSelectedIndex;
             //mapPolygonLayer.Invalidate();
-            
+
+            float min = 0;
+            float max = 0;
+            yearSliceDataTransformer.GetDataCube().GetColumnMaxMin(choroplethMapSelectedIndex, out max, out min);
+
+
+            interactiveColorLegend.MaxValue = max;
+            interactiveColorLegend.MinValue = min;
+
             interactiveColorLegend.SetHeader(excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex]);
             choroplethMap.Invalidate();
+        }
+
+        void trackBarYearSelecter_ValueChanged(object sender, System.EventArgs e)
+        {
+            //throw new System.NotImplementedException();
+            this.textBoxYear.Text = this.trackBarYearSelecter.Value.ToString();
+            yearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
+            yearSliceDataTransformer.CommitChanges();
+            colorMap.Input = yearSliceDataTransformer.GetDataCube();
+            colorMap.Index = choroplethMapSelectedIndex;
+            
+            colorMap.Invalidate();
+            interactiveColorLegend.ColorMap = colorMap;
+            float min = 0;
+            float max = 0;
+            yearSliceDataTransformer.GetDataCube().GetColumnMaxMin(choroplethMapSelectedIndex, out max, out min);
+            
+
+            interactiveColorLegend.MaxValue = max;
+            interactiveColorLegend.MinValue = min;
+
+            viewManager.InvalidateAll();
         }
 
     }

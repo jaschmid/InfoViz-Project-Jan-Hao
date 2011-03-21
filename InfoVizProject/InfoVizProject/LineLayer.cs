@@ -18,8 +18,10 @@ namespace InfoVizProject
     {
         class LineLayer : Layer
         {
+            
             private class Line
             {
+                
                 private Vector4[] data;
                 public CustomVertex.PositionOnly[] Vertices
                 {
