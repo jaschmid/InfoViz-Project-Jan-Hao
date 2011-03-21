@@ -35,13 +35,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.textBoxYear = new System.Windows.Forms.TextBox();
             this.comboBox_choropleth = new System.Windows.Forms.ComboBox();
             this.trackBarYearSelecter = new System.Windows.Forms.TrackBar();
-            
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.toolTipChoropleth = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -53,7 +54,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
             this.splitContainer3.SuspendLayout();
             this.SuspendLayout();
-            
             // 
             // splitContainer1
             // 
@@ -121,8 +121,7 @@
             this.trackBarYearSelecter.Size = new System.Drawing.Size(503, 45);
             this.trackBarYearSelecter.TabIndex = 0;
             this.trackBarYearSelecter.TabStop = false;
-            this.trackBarYearSelecter.ValueChanged += new System.EventHandler(trackBarYearSelecter_ValueChanged);
-            //this.trackBarYearSelecter.Visible = false;
+            this.trackBarYearSelecter.ValueChanged += new System.EventHandler(this.trackBarYearSelecter_ValueChanged);
             // 
             // splitContainer3
             // 
@@ -142,6 +141,7 @@
             this.Controls.Add(this.splitContainer1);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -167,6 +167,7 @@
         private System.Windows.Forms.ComboBox comboBox_choropleth;
         private System.Windows.Forms.TrackBar trackBarYearSelecter;
         private System.Windows.Forms.TextBox textBoxYear;
+        private System.Windows.Forms.ToolTip toolTipChoropleth;
         
 
     }

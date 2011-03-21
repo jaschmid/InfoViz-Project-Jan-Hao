@@ -33,6 +33,7 @@ namespace InfoVizProject
         private MapBorderLayer mapBorderLayer;
         private MapPolygonLayer mapPolygonLayer;
         private InteractiveColorLegend interactiveColorLegend;
+        private GavToolTip gavToolTip;
         private StringIndexMapper stringIndexMapper;
 
         private ViewManager viewManager;
@@ -48,6 +49,7 @@ namespace InfoVizProject
             InitializeColor();
             InitializeStringIndexMapper();
             InitializeInteractiveColorLegend(); // add color legend to choropleth map
+            InitializeGavToolTip();
             InitializeMap();
             InitializeCustomComponent();
 
@@ -58,6 +60,8 @@ namespace InfoVizProject
 
             
         }
+
+        
 
         private void InitializeDataTransformer()
         {
@@ -88,11 +92,12 @@ namespace InfoVizProject
         private void InitializeInteractiveColorLegend()
         {
             //throw new NotImplementedException();
-            float[] edgeValues={0} ;
+            
             
             interactiveColorLegend = new InteractiveColorLegend();
+            interactiveColorLegend.Name = "ColorLegend";
             interactiveColorLegend.ColorMap = colorMap;
-            interactiveColorLegend.EdgeValues = edgeValues;
+            interactiveColorLegend.ShowColorEdgeSliders = true;
             interactiveColorLegend.UseRelativePosition = true;
             interactiveColorLegend.SetPosition(0.1f,0.5f);
             interactiveColorLegend.UseRelativeSize = true;
@@ -112,6 +117,37 @@ namespace InfoVizProject
             interactiveColorLegend.ShowMinMaxValues = true;
             
             interactiveColorLegend.Enabled = true;
+            interactiveColorLegend.ValueSliderValuesChanged += new EventHandler(interactiveColorLegend_ValueSliderValuesChanged);
+            interactiveColorLegend.ColorEdgeValuesChanged += new EventHandler(interactiveColorLegend_ColorEdgeValuesChanged);
+            interactiveColorLegend.ThresholdValuesChanged += new EventHandler(interactiveColorLegend_ThresholdValuesChanged); 
+        }
+
+        void interactiveColorLegend_ThresholdValuesChanged(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
+            choroplethMap.Invalidate();
+        }
+
+        void interactiveColorLegend_ColorEdgeValuesChanged(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
+            choroplethMap.Invalidate();
+        }
+
+        void interactiveColorLegend_ValueSliderValuesChanged(object sender, EventArgs e)
+        {
+            //throw new NotImplementedException();
+            
+            choroplethMap.Invalidate();
+            
+        }
+
+        private void InitializeGavToolTip()
+        {
+            //throw new NotImplementedException();
+            gavToolTip = new GavToolTip(this);
+            gavToolTip.SetPosition(new Point(0,0));
+            gavToolTip.ToolTipBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             
             
         }
@@ -176,8 +212,35 @@ namespace InfoVizProject
             choroplethMap.AddLayer(mapPolygonLayer);
             
             choroplethMap.AddLayer(mapBorderLayer);
+            
             choroplethMap.AddSubComponent(interactiveColorLegend);
+            choroplethMap.VizComponentMouseDown += new EventHandler<VizComponentMouseEventArgs>(choroplethMap_VizComponentMouseDown);
+            
 
+        }
+
+        void choroplethMap_VizComponentMouseDown(object sender, VizComponentMouseEventArgs e)
+        {
+            //throw new NotImplementedException();
+            Point p = e.MouseEventArgs.Location;
+            Vector2 mapCoordinates = choroplethMap.ConvertScreenCoordinatesToMapCoordinates(p);
+            int index = mapData.GetRegionId(mapCoordinates.X,mapCoordinates.Y);
+            int mappedIndex = 0;
+            stringIndexMapper.TryMapIndex(index,out mappedIndex);
+            if (index > 0)
+            {
+                gavToolTip.Text = excelDataProvider.RowIds[mappedIndex];
+                gavToolTip.Text += "\n";
+                gavToolTip.Text += excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex] + ":" + yearSliceDataTransformer.GetDataCube().DataArray[choroplethMapSelectedIndex, mappedIndex, 0];
+                
+                gavToolTip.SetPosition(new Point(0,0));
+
+                gavToolTip.Show(p);
+                
+                
+                
+            }
+            choroplethMap.Invalidate();
         }
 
         private void InitializeStringIndexMapper()
