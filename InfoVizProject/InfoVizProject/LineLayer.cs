@@ -29,6 +29,12 @@ namespace InfoVizProject
                     get;
                 }
 
+                public Material Material
+                {
+                    set;
+                    get;
+                }
+
                 private void BuildLines()
                 {
                     if (data == null || data.Length < 2)
@@ -109,6 +115,9 @@ namespace InfoVizProject
 
             // List containing line vector arrays
             private List<Line> lines;
+            private Vector4 dataMax;
+            private Vector4 dataMin;
+
             // D3D Device
             private Device device;
 
@@ -146,10 +155,29 @@ namespace InfoVizProject
                 get;
                 set;
             }
-            public int DataLineColorIndex
+            public Color SelectedIndexColor
             {
                 get;
                 set;
+            }
+
+            public float YAxisSpacing
+            {
+                get;
+                set;
+            }
+            public float XAxisSpacing
+            {
+                get;
+                set;
+            }
+            
+            private List<int> selectedIndexes;
+
+            public void SetSelectedIndexes(List<int> indexes)
+            {
+                selectedIndexes = indexes;
+                Invalidate();
             }
 
             public LineLayer()
@@ -160,7 +188,8 @@ namespace InfoVizProject
                 this.DataLineXIndex = 0;
                 this.DataLineYIndex = 1;
                 this.DataLineThicknessIndex = -1;
-                this.DataLineColorIndex = -1;
+                this.ColorMap = null;
+                this.SelectedIndexColor = Color.Black;
                 this.lines = new List<Line>();
             }
 
@@ -178,23 +207,45 @@ namespace InfoVizProject
                 
                 //this.device.RenderState.CullMode = Cull.None;
 
-                Material black = new Material();
-                black.Emissive = Color.Black;
-                black.Diffuse = Color.Black;
-                black.Ambient = Color.Black;
+                Material mat = new Material();
+
+                int w = Control.AbsoluteSize.Width;
+                int h = Control.AbsoluteSize.Height;
+
                 this.device.VertexFormat = CustomVertex.PositionOnly.Format;
-                this.device.Transform.Projection = Matrix.OrthoLH(Control.AbsoluteSize.Width, Control.AbsoluteSize.Height, 0.01f, 100.0f);
-                this.device.Transform.View = Matrix.LookAtLH(new Vector3(Control.AbsoluteSize.Width / 2, Control.AbsoluteSize.Height / 2, -10.0f),
-                                                                new Vector3(Control.AbsoluteSize.Width / 2, Control.AbsoluteSize.Height / 2, 0.0f),
+                this.device.Transform.Projection = Matrix.OrthoLH(w, h, 0.01f, 100.0f);
+                this.device.Transform.View = Matrix.LookAtLH(new Vector3(w/2, h/2, -10.0f),
+                                                                new Vector3(w/2, h/2, 0.0f),
                                                                 new Vector3(0.0f, 1.0f, 0.0f));
                 this.device.Transform.World = Matrix.Identity;
-                this.device.Material = black;
                 this.device.RenderState.DiffuseMaterialSource = ColorSource.Material;
                 this.device.RenderState.EmissiveMaterialSource = ColorSource.Material;
                 this.device.RenderState.Lighting = true;
                 
-                foreach(Line l in this.lines)
+                for(int i = 0;i<this.lines.Count;++i)
                 {
+                    Line l = this.lines[i];
+
+                    if (this.selectedIndexes!= null && this.selectedIndexes.Contains(i))
+                    {
+                        mat.Emissive = this.SelectedIndexColor;
+                        mat.Diffuse = this.SelectedIndexColor;
+                        mat.Ambient = this.SelectedIndexColor;
+                    }
+                    else if (this.ColorMap != null)
+                    {
+                        mat.Emissive = this.ColorMap.GetColor(i);
+                        mat.Diffuse = this.ColorMap.GetColor(i);
+                        mat.Ambient = this.ColorMap.GetColor(i);
+                    }
+                    else
+                    {
+                        mat.Emissive = Color.Black;
+                        mat.Diffuse = Color.Black;
+                        mat.Ambient = Color.Black;
+                    }
+                    this.device.Material = mat;
+
                     // Draws the apropriate line in the color specified by the colormap
                     this.device.DrawUserPrimitives(PrimitiveType.TriangleStrip, l.Vertices.Length - 2, l.Vertices);
                     Vector4 v = new Vector4(l.Vertices[0].Position.X,l.Vertices[0].Position.Y,l.Vertices[0].Position.Z,1.0f);
@@ -220,8 +271,6 @@ namespace InfoVizProject
                 List<float> columnMaxList, columnMinList;
                 Input.GetDataCube().GetAllColumnMaxMin(out columnMaxList, out columnMinList);
 
-                // Calculate column spacing
-                float columnSpacing = Control.AbsoluteSize.Width / ((float)data.GetLength(0) - 1);
 
                 // Create the line vector arrays
                 for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
@@ -239,7 +288,8 @@ namespace InfoVizProject
                         }
                         else lData[iTime].X = 0.5f;
 
-                        lData[iTime].X *= Control.AbsoluteSize.Width;
+                        lData[iTime].X *= Control.AbsoluteSize.Width - XAxisSpacing;
+                        lData[iTime].X += XAxisSpacing;
 
                         if (this.DataLineYIndex >= 0)
                         {
@@ -248,14 +298,15 @@ namespace InfoVizProject
                         }
                         else lData[iTime].Y = 0.5f;
 
-                        lData[iTime].Y *= Control.AbsoluteSize.Height;
+                        lData[iTime].Y *= Control.AbsoluteSize.Height - YAxisSpacing;
+                        lData[iTime].Y += YAxisSpacing;
 
                         if (this.DataLineThicknessIndex >= 0)
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
                             lData[iTime].Z = ((float)data.GetValue(loc) - columnMinList[this.DataLineThicknessIndex]) / (columnMaxList[this.DataLineThicknessIndex] - columnMinList[this.DataLineThicknessIndex]);
                         }
-                        else lData[iTime].Z = 1.0f;
+                        else lData[iTime].Z = 0.5f;
 
                     }
 

@@ -41,6 +41,57 @@ namespace InfoVizProject
         }
 
 
+        // Settings
+        public Axis LineSourceAxis
+        {
+            get{ return this.lineLayer.LineSourceAxis;}
+            set{ this.lineLayer.LineSourceAxis = value;}
+        }
+        public Axis TimeSourceAxis
+        {
+            get { return this.lineLayer.TimeSourceAxis; }
+            set { this.lineLayer.TimeSourceAxis = value; }
+        }
+        public Axis DataSourceAxis
+        {
+            get { return this.lineLayer.DataSourceAxis; }
+            set { this.lineLayer.DataSourceAxis = value; }
+        }
+        public int DataLineXIndex
+        {
+            get { return this.lineLayer.DataLineXIndex; }
+            set { this.lineLayer.DataLineXIndex = value; }
+        }
+        public int DataLineYIndex
+        {
+            get { return this.lineLayer.DataLineYIndex; }
+            set { this.lineLayer.DataLineYIndex = value; }
+        }
+        public int DataLineThicknessIndex
+        {
+            get { return this.lineLayer.DataLineThicknessIndex; }
+            set { this.lineLayer.DataLineThicknessIndex = value; }
+        }
+        public Color SelectedIndexColor
+        {
+            get { return this.lineLayer.SelectedIndexColor; }
+            set { this.lineLayer.SelectedIndexColor = value; }
+        }
+        public void SetSelectedIndexes(List<int> indexes)
+        {
+            this.lineLayer.SetSelectedIndexes(indexes);
+        }
+        public void SetAxisSize(float XAxisSize, float YAxisSize)
+        {
+            this.lineLayer.XAxisSpacing = XAxisSize;
+            this.lineLayer.YAxisSpacing = YAxisSize;
+        }
+        public void SetAxisLabels(string XAxisLabel, string YAxisLabel)
+        {
+            this.axisLayer.XAxisLabel = XAxisLabel;
+            this.axisLayer.YAxisLabel = YAxisLabel;
+        }
+
         public CustomComponent()
             : base()
         {
@@ -58,10 +109,18 @@ namespace InfoVizProject
             glyphLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
             layers.Add(glyphLayer);*/
 
-            LineLayer lineLayer = new LineLayer();
-            lineLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
-            
-            layers.Add(lineLayer);
+            this.lineLayer = new LineLayer();
+            this.lineLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
+            this.lineLayer.XAxisSpacing = 30.0f;
+            this.lineLayer.YAxisSpacing = 30.0f;
+            layers.Add(this.lineLayer);
+
+
+            this.axisLayer = new AxisLayer();
+            this.axisLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
+            this.axisLayer.XAxisSpacing = 30.0f;
+            this.axisLayer.YAxisSpacing = 30.0f;
+            layers.Add(this.axisLayer);
             /*
             TextLayer textLayer = new TextLayer();
             textLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
@@ -74,158 +133,8 @@ namespace InfoVizProject
             }
         }
 
-        /// <summary>
-        /// Layer that draws one glyph per item in the dataset, x/y position is determined by the first two columns and size is from the value in the third.
-        /// </summary>
-        private class GlyphLayer : Layer
-        {
-            // Used to map from data values to 0-1
-            private AxisMap _axisMapX, _axisMapY, _axisMapSize;
-            // Stores the actual glyph positions and sizes
-            private List<Vector2> _glyphPositions;
-            private List<float> _glyphSizes;
-            // Texture containing the glyph used in the plot.
-            private Texture _glyphTexture;
-            // Sprite object used to render glyphs.
-            private Sprite _sprite;
-            // The size from the actual texture source
-            private int _glyphTextureSize;
-            // Column indecies (attributes) in the input data to use on the tow axes andfor size
-            int _xIndex = 0;
-            int _yIndex = 1;
-            int _sizeIndex = 2;
-
-            public GlyphLayer()
-            {
-                _axisMapX = new AxisMap();
-                _axisMapY = new AxisMap();
-                _axisMapSize = new AxisMap();
-
-                _glyphPositions = new List<Vector2>();
-                _glyphSizes = new List<float>();
-            }
-
-            protected void Initialize(Device device)
-            {
-                // Sprite object used to draw the glyphs
-                _sprite = new Sprite(device);
-                // White circle texture loaded from a file (make sure the file is where it should be)
-                Bitmap bitMap = new Bitmap("Graphics_Glyph.png");
-                _glyphTexture = new Texture(device, bitMap, Usage.None, Pool.Managed);
-                // Size of the texture
-                _glyphTextureSize = bitMap.Width;
-            }
-
-            protected override void Render(Device device)
-            {
-                if (!_inited) Initialize(device);
-                CreateGlyphs();
-
-                _sprite.Begin(SpriteFlags.AlphaBlend);
-
-                for (int i = 0; i < _glyphPositions.Count; i++)
-                {
-                    float scale;
-
-                    scale = Math.Min(Control.AbsoluteSize.Width, Control.AbsoluteSize.Height) * (_glyphSizes[i] * 0.1f);
-                    scale /= (float)_glyphTextureSize;
-
-
-                    Point p = new Point();
-                    p.X = (int)(_glyphPositions[i].X * Control.AbsoluteSize.Width);
-                    p.Y = (int)((1.0f - _glyphPositions[i].Y) * Control.AbsoluteSize.Height);
-                    p.X = (int)(p.X / scale);
-                    p.Y = (int)(p.Y / scale);
-
-                    _sprite.Transform = Matrix.Scaling(scale, scale, 1);
-                    _sprite.Draw(_glyphTexture, new Vector3(_glyphTextureSize / 2, _glyphTextureSize / 2, 0), new Vector3(p.X, p.Y, 0), ColorMap.GetColor(i).ToArgb());
-                }
-                _sprite.End();
-            }
-
-            private void CreateGlyphs()
-            {
-                // Check for problems with the input
-                if (Input == null || Input.GetDataCube() == null || Input.GetDataCube().DataArray == null) return;
-
-                _axisMapX.Input = Input;
-                _axisMapY.Input = Input;
-                _axisMapSize.Input = Input;
-
-                _axisMapX.Index = _xIndex;
-                _axisMapY.Index = _yIndex;
-                _axisMapSize.Index = _sizeIndex;
-
-                _axisMapX.DoMapping();
-                _axisMapY.DoMapping();
-                _axisMapSize.DoMapping();
-
-                _glyphPositions.Clear();
-                _glyphSizes.Clear();
-                // AxisMap.MappedValues contains the input values scaled between 0 and 1 according to each columns max and min
-                for (int i = 0; i < Input.GetDataCube().DataArray.GetLength(1); i++)
-                {
-                    _glyphPositions.Add(new Vector2(_axisMapX.MappedValues[i], _axisMapY.MappedValues[i]));
-                    _glyphSizes.Add(_axisMapSize.MappedValues[i]);
-                }
-            }
-        }
-        
-        /// <summary>
-        /// Layer that writes some text
-        /// </summary>
-        private class TextLayer : Layer
-        {
-
-            private Microsoft.DirectX.Direct3D.Font _d3dFont;
-            private System.Drawing.Font _font;
-
-            private Mesh _textMesh;
-            private Material _material;
-
-            public TextLayer()
-            {
-                _font = new System.Drawing.Font("Verdana", 10);
-            }
-
-            protected void Initialize(Device device)
-            {
-                // Use the GAV fontpool to avoid creating extra copies of fonts
-                _d3dFont = FontPool.GetFont(_font, device);
-                _textMesh = Mesh.Box(device, 0.5f, 0.5f, 0.5f);
-
-                _material = new Material();
-                _material.Ambient = Color.Red;
-                _material.Diffuse = Color.Red;
-                _material.Emissive = Color.Red;
-
-                _inited = true;
-            }
-
-            protected override void Render(Device device)
-            {
-                if (!_inited) Initialize(device);
-
-                // As d3dFont uses a sprite to draw, it draws in component absolute space, ignoring the margins of the layer,
-                // therefore we need to convert from Layer Absolute to Component Absolute.
-                /*Point textPosition = new Point((int)Control.ConvertLayerAbsoluteXToComponentAbsoluteX(0), (int)Control.ConvertLayerAbsoluteXToComponentAbsoluteX(1));
-                _d3dFont.DrawText(null, "This text is drawn using DirectX Font class", textPosition, Color.Black);*/
-
-                Material black = new Material();
-                black.Emissive = Color.Red;
-                black.Diffuse = Color.Red;
-                black.Ambient = Color.Red;
-
-                device.RenderState.Lighting = true;
-                device.Material = black;
-                device.Transform.Projection = Matrix.PerspectiveFovLH((float)Math.PI / 4, Control.AbsoluteSize.Width * 1.0f / Control.AbsoluteSize.Height, 0.1f, 10.0f);
-                device.Transform.View = Matrix.LookAtLH(new Vector3(0, 0, -10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-                device.Transform.World = Matrix.Scaling(0.5f, 1f, 1) * Matrix.Translation(-3f, 0, 0);
-
-                Mesh m = Mesh.Box(device, 0.5f, 0.5f, 0.5f);
-                m.DrawSubset(0);
-            }
-        }
+        private LineLayer lineLayer;
+        private AxisLayer axisLayer;
 
         /// <summary>
         /// Layer that draws a "thing" that you can move and change color to. 
