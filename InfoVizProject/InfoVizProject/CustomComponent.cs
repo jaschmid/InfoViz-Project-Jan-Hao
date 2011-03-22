@@ -92,6 +92,11 @@ namespace InfoVizProject
             this.axisLayer.YAxisLabel = YAxisLabel;
         }
 
+        public int GetClosestLine(int sourceIndex)
+        {
+            return 0;
+        }
+
         public class SelectionUpdatedEventArgs : System.EventArgs
         {
             public List<int> SelectedItems;
