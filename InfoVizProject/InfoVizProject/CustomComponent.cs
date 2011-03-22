@@ -92,6 +92,15 @@ namespace InfoVizProject
             this.axisLayer.YAxisLabel = YAxisLabel;
         }
 
+        public class SelectionUpdatedEventArgs : System.EventArgs
+        {
+            public List<int> SelectedItems;
+        };
+
+        public delegate void SelectionUpdatedEventHandler(object sender, SelectionUpdatedEventArgs e);
+
+        public event SelectionUpdatedEventHandler SelectionChanged;
+
         public CustomComponent()
             : base()
         {
@@ -121,11 +130,24 @@ namespace InfoVizProject
             this.axisLayer.XAxisSpacing = 30.0f;
             this.axisLayer.YAxisSpacing = 30.0f;
             layers.Add(this.axisLayer);
+
+
+            this.interactionLayer = new InteractionLayer(this.lineLayer);
+            this.interactionLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
+            this.interactionLayer.SelectionChanged += new SelectionUpdatedEventHandler(InternalSelectionUpdatedEvent);
+            layers.Add(this.interactionLayer);
             /*
             TextLayer textLayer = new TextLayer();
             textLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
             layers.Add(textLayer);
             */
+
+            List<int> selected = new List<int>();
+            selected.Add(201);
+            selected.Add(202);
+            selected.Add(203);
+
+            this.SetSelectedIndexes(selected);
 
             foreach (Layer layer in layers)
             {
@@ -133,109 +155,15 @@ namespace InfoVizProject
             }
         }
 
+        private void InternalSelectionUpdatedEvent(object sender, SelectionUpdatedEventArgs e)
+        {
+            this.SelectionChanged(this,e);
+            this.Invalidate();
+        }
+
         private LineLayer lineLayer;
         private AxisLayer axisLayer;
-
-        /// <summary>
-        /// Layer that draws a "thing" that you can move and change color to. 
-        /// Draws in object space but handles interaction in screen space, shows off the conversion between the two.
-        /// </summary>
-        private class InteractionLayer : Layer
-        {
-            private Vector3[] _vertices;
-            private VertexBuffer _vb;
-            private Material _material;
-
-            private Vector2 _mouseDownDelta;
-            private Vector3 _boxPosition;
-            private float _scale;
-            private bool _moveBox;
-
-            public InteractionLayer()
-            {
-                _vertices = new Vector3[4];
-                _vertices[0] = new Vector3(-1, -1, 0);
-                _vertices[1] = new Vector3(-1, 1, 0);
-                _vertices[2] = new Vector3(1, -1, 0);
-                _vertices[3] = new Vector3(1, 1, 0);
-
-            }
-
-            protected void Initialize(Device device)
-            {
-                _inited = true;
-                _vb = new VertexBuffer(typeof(CustomVertex.PositionOnly), 4, device, Usage.None, CustomVertex.PositionOnly.Format, Pool.Managed);
-                _vb.SetData(_vertices, 0, LockFlags.None);
-                _boxPosition = new Vector3(0.5f, 0.5f, 0);
-                _scale = 0.25f;
-
-                // Pick a random color from the ColorMap
-                Random rand = new Random();
-                Color boxColor = ColorMap.GetColor(rand.Next(Input.GetDataCube().DataArray.GetLength(1)));
-
-                _material = new Material();
-                _material.Ambient = boxColor;
-                _material.Diffuse = boxColor;
-                _material.Emissive = boxColor;
-            }
-
-            protected override void Render(Device device)
-            {
-                if (!_inited) Initialize(device);
-
-                device.RenderState.Lighting = true;
-                device.Material = _material;
-                device.VertexFormat = CustomVertex.PositionOnly.Format;
-
-                device.Transform.World = Matrix.Scaling(_scale, _scale, 1) * Matrix.Translation(_boxPosition);
-
-                device.SetStreamSource(0, _vb, 0);
-                device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-            }
-
-            protected override bool MouseDown(Gav.Components.Events.LayerMouseButtonEventArgs e)
-            {
-                Vector2 pos = e.GetLayerRelativePosition();
-                if (_boxPosition.X + _scale > pos.X && _boxPosition.X - _scale < pos.X &&
-                    _boxPosition.Y + _scale > pos.Y && _boxPosition.Y - _scale < pos.Y)
-                {
-                    _moveBox = true;
-                    _mouseDownDelta.X = _boxPosition.X - pos.X;
-                    _mouseDownDelta.Y = _boxPosition.Y - pos.Y;
-                    // Returnning true locks the mouse to this layer until false is returned
-                    return true;
-                }
-
-                return false;
-            }
-
-            protected override bool MouseMove(Gav.Components.Events.LayerMouseMoveEventArgs e)
-            {
-                if (_moveBox)
-                {
-                    Vector2 pos = e.GetLayerRelativePosition();
-                    _boxPosition = new Vector3(pos.X + _mouseDownDelta.X, pos.Y + _mouseDownDelta.Y, 0);
-                    Render();
-                    return true;
-                }
-                return false;
-            }
-
-            protected override bool MouseUp(Gav.Components.Events.LayerMouseButtonEventArgs e)
-            {
-                _moveBox = false;
-                return false;
-            }
-
-            protected override bool MouseWheel(Gav.Components.Events.LayerMouseWheelEventArgs e)
-            {
-                _scale += e.WheelDelta / 1000.0f * Math.Abs(_scale);
-                Render();
-                // Return false to continue sending MouseWheel to the other layers,
-                // return true to stop sending the event.
-                return true;
-            }
-        }
+        private InteractionLayer interactionLayer;
     }
 
 

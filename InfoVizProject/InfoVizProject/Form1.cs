@@ -28,6 +28,7 @@ namespace InfoVizProject
 
         private ExcelDataProvider excelDataProvider;
         private YearSliceDataTransformer yearSliceDataTransformer;
+        private LogDataTransformer logDataTransformer;
         private ChoroplethMap choroplethMap;  // world map component
         private MapData mapData;
         private MapBorderLayer mapBorderLayer;
@@ -69,6 +70,10 @@ namespace InfoVizProject
             yearSliceDataTransformer = new YearSliceDataTransformer();
             yearSliceDataTransformer.Input = excelDataProvider;
             yearSliceDataTransformer.CurrentSelectedYear = 1960;
+
+
+            logDataTransformer = new LogDataTransformer();
+            logDataTransformer.Input = excelDataProvider;
         }
 
         private void ControlComponentHandle()
@@ -166,8 +171,9 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             component = new CustomComponent();
-            component.Input = excelDataProvider;
+            component.Input = logDataTransformer.GetDataCube();
             component.ColorMap = colorMap;
+            this.component.SelectionChanged += new CustomComponent.SelectionUpdatedEventHandler(customComponent_SelectionUpdatedEvent);
         }
 
         private void InitializeData()
@@ -247,6 +253,22 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             stringIndexMapper = new StringIndexMapper(mapData.RegionFullNames, excelDataProvider.RowIds);
+        }
+
+        private void customComponent_SelectionUpdatedEvent(object sender, CustomComponent.SelectionUpdatedEventArgs e)
+        {
+            List<int> selectedItems = new List<int>();
+            foreach (int i in e.SelectedItems)
+            {
+                int mappedIndex = 0;
+                stringIndexMapper.TryBackwardMapIndex(i, out mappedIndex);
+                if(mappedIndex != -1)
+                    selectedItems.Add(mappedIndex);
+            }
+
+            this.mapPolygonLayer.SetSelectedIndexes(selectedItems);
+            this.mapPolygonLayer.Invalidate();
+            this.choroplethMap.Invalidate();
         }
 
         private void comboBox_choropleth_SelectedIndexChanged(object sender, EventArgs e)

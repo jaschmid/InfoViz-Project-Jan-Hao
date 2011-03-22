@@ -111,12 +111,70 @@ namespace InfoVizProject
                         BuildLines();
                     }
                 }
+
+                public float GetDistanceToPoint(float cx, float cy)
+                {
+                    float minDistance = float.MaxValue;
+                    for (int i = 0; i < this.PositionData.Length - 1; ++i)
+                    {
+                        float thisDistance = 0.0f;
+                        float ax = this.PositionData[i].X;
+                        float ay = this.PositionData[i].Y;
+                        float bx = this.PositionData[i+1].X;
+                        float by = this.PositionData[i+1].Y;
+
+                        float r_numerator = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
+                        float r_denomenator = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+                        float r = r_numerator / r_denomenator;
+                        //
+                        float px = ax + r * (bx - ax);
+                        float py = ay + r * (by - ay);
+                        //     
+                        float s = ((ay - cy) * (bx - ax) - (ax - cx) * (by - ay)) / r_denomenator;
+
+                        float distanceLine = Math.Abs(s) * (float)Math.Sqrt((double)r_denomenator);
+
+                        //
+                        // (xx,yy) is the point on the lineSegment closest to (cx,cy)
+                        //
+                        double xx = px;
+                        double yy = py;
+
+                        if ((r >= 0) && (r <= 1))
+                        {
+                            thisDistance = distanceLine;
+                        }
+                        else
+                        {
+
+                            double dist1 = (cx - ax) * (cx - ax) + (cy - ay) * (cy - ay);
+                            double dist2 = (cx - bx) * (cx - bx) + (cy - by) * (cy - by);
+                            if (dist1 < dist2)
+                            {
+                                xx = ax;
+                                yy = ay;
+                                thisDistance = (float)Math.Sqrt((double)dist1);
+                            }
+                            else
+                            {
+                                xx = bx;
+                                yy = by;
+                                thisDistance = (float)Math.Sqrt((double)dist2);
+                            }
+
+
+                        }
+
+
+                        if (thisDistance < minDistance)
+                            minDistance = thisDistance;
+                    }
+                    return minDistance;
+                }
             }
 
             // List containing line vector arrays
             private List<Line> lines;
-            private Vector4 dataMax;
-            private Vector4 dataMin;
 
             // D3D Device
             private Device device;
@@ -193,6 +251,24 @@ namespace InfoVizProject
                 this.lines = new List<Line>();
             }
 
+            public int GetClosestLine(int x, int y)
+            {
+                y = (this.Control.ComponentSize.Height + this.Control.AbsoluteSize.Height)/2 - y;
+                x = (this.Control.AbsoluteSize.Height - this.Control.ComponentSize.Height) / 2 + x;
+                float minDistance = float.MaxValue;
+                int minIndex = -1;
+                for (int i = 0; i < this.lines.Count; ++i)
+                {
+                    float this_distance = this.lines[i].GetDistanceToPoint((float)x, (float)y);
+                    if (this_distance < minDistance)
+                    {
+                        minIndex = i;
+                        minDistance = this_distance;
+                    }
+                }
+                return minIndex;
+            }
+
             protected void Initialize(Device device)
             {
                 this.device = device;
@@ -205,7 +281,7 @@ namespace InfoVizProject
                 if (!_inited) Initialize(device);
                 CreateLines();
                 
-                //this.device.RenderState.CullMode = Cull.None;
+                this.device.RenderState.CullMode = Cull.None;
 
                 Material mat = new Material();
 
@@ -228,9 +304,7 @@ namespace InfoVizProject
 
                     if (this.selectedIndexes!= null && this.selectedIndexes.Contains(i))
                     {
-                        mat.Emissive = this.SelectedIndexColor;
-                        mat.Diffuse = this.SelectedIndexColor;
-                        mat.Ambient = this.SelectedIndexColor;
+                        continue;
                     }
                     else if (this.ColorMap != null)
                     {
@@ -248,10 +322,16 @@ namespace InfoVizProject
 
                     // Draws the apropriate line in the color specified by the colormap
                     this.device.DrawUserPrimitives(PrimitiveType.TriangleStrip, l.Vertices.Length - 2, l.Vertices);
-                    Vector4 v = new Vector4(l.Vertices[0].Position.X,l.Vertices[0].Position.Y,l.Vertices[0].Position.Z,1.0f);
-                    v.Transform(this.device.Transform.World);
-                    v.Transform(this.device.Transform.View);
-                    v.Transform(this.device.Transform.Projection);
+                }
+
+                for (int i = 0; i < this.selectedIndexes.Count;++i )
+                {
+                    Line l = this.lines[this.selectedIndexes[i]];
+                    mat.Emissive = this.SelectedIndexColor;
+                    mat.Diffuse = this.SelectedIndexColor;
+                    mat.Ambient = this.SelectedIndexColor;
+                    this.device.Material = mat;
+                    this.device.DrawUserPrimitives(PrimitiveType.TriangleStrip, l.Vertices.Length - 2, l.Vertices);
                 }
             }
 
@@ -265,13 +345,33 @@ namespace InfoVizProject
 
                 // Get the data
                 float[, ,] data = Input.GetDataCube().DataArray;
+                
                 int[] loc = new int[3];
 
-                // Get the maximum and minimum of all columns
-                List<float> columnMaxList, columnMinList;
-                Input.GetDataCube().GetAllColumnMaxMin(out columnMaxList, out columnMinList);
-
-
+                // Get the maximum and minimum for all data fields
+                float[] maxData = new float[data.GetLength((int)this.DataSourceAxis)],
+                    minData = new float[data.GetLength((int)this.DataSourceAxis)];
+                for (int iData = 0; iData < data.GetLength((int)this.DataSourceAxis); ++iData)
+                {
+                    loc[(int)this.DataSourceAxis] = iData;
+                    float fMaxData = float.MinValue, fMinData = float.MaxValue;
+                    for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
+                    {
+                        loc[(int)this.LineSourceAxis] = iLine;
+                        for (int iTime = 0; iTime < data.GetLength((int)this.TimeSourceAxis); iTime++)
+                        {
+                            loc[(int)this.TimeSourceAxis] = iTime;
+                            float val = (float)data.GetValue(loc);
+                            if (val > fMaxData)
+                                fMaxData = val;
+                            if (val < fMinData)
+                                fMinData = val;
+                        }
+                    }
+                    maxData[iData] = fMaxData;
+                    minData[iData] = fMinData;
+                }
+                
                 // Create the line vector arrays
                 for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
                 {
@@ -284,29 +384,32 @@ namespace InfoVizProject
                         if (this.DataLineXIndex >= 0)
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineXIndex;
-                            lData[iTime].X = ((float)data.GetValue(loc)-columnMinList[this.DataLineXIndex])/(columnMaxList[this.DataLineXIndex]-columnMinList[this.DataLineXIndex]);
+                            float val = (float)data.GetValue(loc);
+                            lData[iTime].X = (val - minData[this.DataLineXIndex]) / (maxData[this.DataLineXIndex] - minData[this.DataLineXIndex]);
                         }
                         else lData[iTime].X = 0.5f;
 
-                        lData[iTime].X *= Control.AbsoluteSize.Width - XAxisSpacing;
+                        lData[iTime].X *= Control.AbsoluteSize.Width;
                         lData[iTime].X += XAxisSpacing;
 
                         if (this.DataLineYIndex >= 0)
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineYIndex;
-                            lData[iTime].Y = ((float)data.GetValue(loc) - columnMinList[this.DataLineYIndex]) / (columnMaxList[this.DataLineYIndex] - columnMinList[this.DataLineYIndex]);
+                            float val = (float)data.GetValue(loc);
+                            lData[iTime].Y = (val - minData[this.DataLineYIndex]) / (maxData[this.DataLineYIndex] - minData[this.DataLineYIndex]);
                         }
                         else lData[iTime].Y = 0.5f;
 
-                        lData[iTime].Y *= Control.AbsoluteSize.Height - YAxisSpacing;
+                        lData[iTime].Y *= Control.AbsoluteSize.Height - 2*YAxisSpacing;
                         lData[iTime].Y += YAxisSpacing;
 
                         if (this.DataLineThicknessIndex >= 0)
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
-                            lData[iTime].Z = ((float)data.GetValue(loc) - columnMinList[this.DataLineThicknessIndex]) / (columnMaxList[this.DataLineThicknessIndex] - columnMinList[this.DataLineThicknessIndex]);
+                            float val = (float)data.GetValue(loc);
+                            lData[iTime].Z = (val - minData[this.DataLineThicknessIndex]) / (maxData[this.DataLineThicknessIndex] - minData[this.DataLineThicknessIndex]);
                         }
-                        else lData[iTime].Z = 0.5f;
+                        else lData[iTime].Z = 1.0f;
 
                     }
 
