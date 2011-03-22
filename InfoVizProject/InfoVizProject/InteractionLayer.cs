@@ -68,12 +68,29 @@ namespace InfoVizProject
                     // Returnning true locks the mouse to this layer until false is returned
                     return true;
                 */
-                selectedItems = new List<int>();
-                selectedItems.Add(lineLayer.GetClosestLine(e.Location.X,e.Location.Y));
-                SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
-                eventArgs.SelectedItems = this.selectedItems;
-                lineLayer.SetSelectedIndexes(this.selectedItems);
-                SelectionChanged(this, eventArgs);
+                if (e.MouseButton == System.Windows.Forms.MouseButtons.Left)
+                {
+                    this.selectedItems = new List<int>();
+                    this.selectedItems.Add(this.lineLayer.GetClosestLine(e.Location.X, e.Location.Y));
+                    SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
+                    eventArgs.SelectedItems = this.selectedItems;
+                    this.lineLayer.SetSelectedIndexes(this.selectedItems);
+                    this.SelectionChanged(this, eventArgs);
+                }
+                else if (e.MouseButton == System.Windows.Forms.MouseButtons.Right)
+                {
+                    if(this.selectedItems != null && this.selectedItems.Count > 0)
+                    {
+                        List<int> proposed = lineLayer.GetClosestLinesToLine(this.selectedItems[0]);
+                        this.selectedItems = new List<int>();
+                        if(proposed.Count > 0)
+                            this.selectedItems.Add(proposed[0]);
+                        this.lineLayer.SetSelectedIndexes(this.selectedItems);
+                        SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
+                        eventArgs.SelectedItems = this.selectedItems;
+                        this.SelectionChanged(this, eventArgs);
+                    }
+                }
 
                 return true;
             }

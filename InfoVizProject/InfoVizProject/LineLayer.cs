@@ -112,6 +112,53 @@ namespace InfoVizProject
                     }
                 }
 
+                private float GetLengthCloserThan(float fMaxDistance, Vector2[] line)
+                {
+                    float length = 0.0f;
+                    for (int i = 0; i < line.Length-1; ++i)
+                    {
+                        float p1Dist = GetDistanceToPoint(line[i].X, line[i].Y);
+                        float p2Dist = GetDistanceToPoint(line[i + 1].X, line[i + 1].Y);
+                        float short_dist = Math.Min(p1Dist, p2Dist);
+                        float long_dist = Math.Max(p1Dist, p2Dist);
+
+                        if (long_dist < fMaxDistance)
+                        {
+                            //entire length is closer
+                            length += (float)(line[i + 1] - line[i]).Length();
+                        }
+                        else if (short_dist > fMaxDistance)
+                            continue; //none of it is closer
+                        else
+                        {
+                            float pCloser = (fMaxDistance - short_dist) / (long_dist - short_dist);
+                            length += pCloser * (float)(line[i + 1] - line[i]).Length();
+                        }
+                    }
+
+                    return length;
+                }
+
+                public float Length()
+                {
+                    float result = 0.0f;
+                    for (int i = 0; i < this.PositionData.Length - 1; ++i)
+                    {
+                        float d= (this.PositionData[i + 1] - this.PositionData[i]).Length();
+                        if (!float.IsNaN(d))
+                            result += d;
+                    }
+                    return result;
+                }
+
+                private const float measure_factor = 80.0f;
+
+                public float GetInterLineMeasurement(Line l2)
+                {
+                    float cutoff_distance = (this.Length() + l2.Length()) / measure_factor;
+                    return (l2.GetLengthCloserThan(cutoff_distance, this.PositionData) + this.GetLengthCloserThan(cutoff_distance, l2.PositionData)) / cutoff_distance * measure_factor;
+                }
+
                 public float GetDistanceToPoint(float cx, float cy)
                 {
                     float minDistance = float.MaxValue;
@@ -249,6 +296,40 @@ namespace InfoVizProject
                 this.ColorMap = null;
                 this.SelectedIndexColor = Color.Black;
                 this.lines = new List<Line>();
+            }
+
+            public List<int> GetClosestLinesToLine(int index)
+            {
+                List<int> results = new List<int>();
+                Line refLine = this.lines[index];
+                SortedDictionary<float, List<int>> dict = new SortedDictionary<float, List<int>>();
+                for(int i = 0; i < this.lines.Count ; ++i)
+                    if (i != index)
+                    {
+                        float dist = this.lines[i].GetInterLineMeasurement(refLine);
+                        if (dist != 0.0f && !float.IsNaN(dist))
+                        {
+                            List<int> value;
+                            if (dict.TryGetValue(dist, out value))
+                            {
+                                value.Add(i);
+                            }
+                            else
+                            {
+                                value = new List<int>();
+                                value.Add(i);
+                                dict.Add(dist, value);
+                            }
+                        }
+                    }
+
+                foreach (KeyValuePair<float, List<int>> p in dict)
+                    foreach(int i in p.Value)
+                        results.Add(i);
+
+                results.Reverse();
+
+                return results;
             }
 
             public int GetClosestLine(int x, int y)
