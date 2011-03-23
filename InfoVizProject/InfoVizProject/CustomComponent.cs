@@ -62,6 +62,11 @@ namespace InfoVizProject
             get { return this.lineLayer.DataLineXIndex; }
             set { this.lineLayer.DataLineXIndex = value; }
         }
+        public float DataLineThicknessScale
+        {
+            get { return this.lineLayer.DataLineThicknessScale; }
+            set { this.lineLayer.DataLineThicknessScale = value; }
+        }
         public int DataLineYIndex
         {
             get { return this.lineLayer.DataLineYIndex; }

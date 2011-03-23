@@ -174,6 +174,8 @@ namespace InfoVizProject
             component.Input = logDataTransformer.GetDataCube();
             component.ColorMap = colorMap;
             this.component.SelectionChanged += new CustomComponent.SelectionUpdatedEventHandler(customComponent_SelectionUpdatedEvent);
+            this.component.DataLineXIndex = 1;
+            this.component.DataLineYIndex = 0;
         }
 
         private void InitializeData()

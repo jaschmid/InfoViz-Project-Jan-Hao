@@ -255,6 +255,11 @@ namespace InfoVizProject
                 get;
                 set;
             }
+            public float DataLineThicknessScale
+            {
+                get;
+                set;
+            }
             public int DataLineThicknessIndex
             {
                 get;
@@ -293,6 +298,7 @@ namespace InfoVizProject
                 this.DataLineXIndex = 0;
                 this.DataLineYIndex = 1;
                 this.DataLineThicknessIndex = -1;
+                this.DataLineThicknessScale = 1.5f;
                 this.ColorMap = null;
                 this.SelectedIndexColor = Color.Black;
                 this.lines = new List<Line>();
@@ -489,8 +495,9 @@ namespace InfoVizProject
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
                             float val = (float)data.GetValue(loc);
                             lData[iTime].Z = (val - minData[this.DataLineThicknessIndex]) / (maxData[this.DataLineThicknessIndex] - minData[this.DataLineThicknessIndex]);
+                            lData[iTime].Z *= this.DataLineThicknessScale;
                         }
-                        else lData[iTime].Z = 1.0f;
+                        else lData[iTime].Z = DataLineThicknessScale;
 
                     }
 
