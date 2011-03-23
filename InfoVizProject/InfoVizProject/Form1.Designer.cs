@@ -84,6 +84,7 @@
             this.splitContainer2.Panel1.Controls.Add(this.textBoxYear);
             this.splitContainer2.Panel1.Controls.Add(this.comboBox_choropleth);
             this.splitContainer2.Panel1.Controls.Add(this.trackBarYearSelecter);
+            this.splitContainer2.Panel1.MouseHover += new System.EventHandler(this.splitContainer2_Panel1_MouseHover);
             this.splitContainer2.Size = new System.Drawing.Size(503, 562);
             this.splitContainer2.SplitterDistance = 313;
             this.splitContainer2.TabIndex = 0;
@@ -128,9 +129,9 @@
             this.splitContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer3.Location = new System.Drawing.Point(0, 0);
             this.splitContainer3.Name = "splitContainer3";
-            this.splitContainer3.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this.splitContainer3.Panel2Collapsed = true;
             this.splitContainer3.Size = new System.Drawing.Size(277, 562);
-            this.splitContainer3.SplitterDistance = 281;
+            this.splitContainer3.SplitterDistance = 140;
             this.splitContainer3.TabIndex = 0;
             // 
             // Form1
@@ -158,10 +159,11 @@
         }
 
         
-
+        
         #endregion
 
         private System.Windows.Forms.SplitContainer splitContainer1;
+        
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.SplitContainer splitContainer3;
         private System.Windows.Forms.ComboBox comboBox_choropleth;
