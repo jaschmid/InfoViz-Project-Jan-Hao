@@ -61,6 +61,10 @@ namespace InfoVizProject
             {
                 this.lineLayer = lineLayer;
                 this.parent = parent;
+                this.findClosest.Click += delegate(object o, EventArgs e)
+                {
+                    this.selectedFindCloseLine();
+                };
             }
 
             protected void Initialize(Device device)
@@ -236,6 +240,10 @@ namespace InfoVizProject
                             this.PopulateAxisSource(this.thicknessSource, this.parent.DataLineThicknessIndex, this.selectedThicknessIndex);
                             this.rClickMenu.MenuItems.Add(this.thicknessSource);
                         }
+                        if (this.selectedItems.Count == 0)
+                            this.findClosest.Enabled = false;
+                        else
+                            this.findClosest.Enabled = true;
                         this.rClickMenu.MenuItems.Add(this.findClosest);
 
                         rClickMenu.Show(this.parent.iRenderTarget, e.Location);
@@ -286,6 +294,17 @@ namespace InfoVizProject
             {
                 parent.DataLineThicknessIndex = newValue;
                 parent.Invalidate();
+            }
+
+            private void selectedFindCloseLine()
+            {
+                List<int> proposed = lineLayer.GetClosestLinesToLine(this.selectedItems[0]);
+                if (proposed.Count > 0)
+                    this.selectedItems.Add(proposed[0]);
+                this.lineLayer.SetSelectedIndexes(this.selectedItems);
+                SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
+                eventArgs.SelectedItems = this.selectedItems;
+                this.SelectionChanged(this, eventArgs);
             }
 
         }
