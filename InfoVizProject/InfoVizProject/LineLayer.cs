@@ -28,6 +28,8 @@ namespace InfoVizProject
                     private set;
                     get;
                 }
+                public int[] FillIndices;
+                public int[] EdgeIndices;
 
                 public Material Material
                 {
@@ -95,6 +97,19 @@ namespace InfoVizProject
 
                     this.PositionData[index].X = (float)this.data[index].X;
                     this.PositionData[index].Y = (float)this.data[index].Y;
+
+                    this.FillIndices = new int[this.Vertices.Length];
+                    for (int i = 0; i < this.Vertices.Length; ++i)
+                        this.FillIndices[i] = i;
+
+                    this.EdgeIndices = new int[this.Vertices.Length + 1];
+                    for (int i = 0; i < this.Vertices.Length / 2; ++i)
+                    {
+                        this.EdgeIndices[i] = 2 * i;
+                        this.EdgeIndices[i + this.Vertices.Length / 2] = this.Vertices.Length - 1 - 2 * i;
+                    }
+                    this.EdgeIndices[this.Vertices.Length] = this.EdgeIndices[0];
+
                 }
 
                 public Vector2[] PositionData
@@ -281,6 +296,18 @@ namespace InfoVizProject
                 get;
                 set;
             }
+
+            public Vector2 Translation
+            {
+                get;
+                set;
+            }
+
+            public float Zoom
+            {
+                get;
+                set;
+            }
             
             private List<int> selectedIndexes;
 
@@ -292,16 +319,8 @@ namespace InfoVizProject
 
             public LineLayer()
             {
-                this.TimeSourceAxis = Axis.Z;
-                this.LineSourceAxis = Axis.Y;
-                this.DataSourceAxis = Axis.X;
-                this.DataLineXIndex = 0;
-                this.DataLineYIndex = 1;
-                this.DataLineThicknessIndex = -1;
-                this.DataLineThicknessScale = 1.5f;
-                this.ColorMap = null;
-                this.SelectedIndexColor = Color.Black;
                 this.lines = new List<Line>();
+                this.Zoom = 1.0f;
             }
 
             public List<int> GetClosestLinesToLine(int index)
@@ -340,13 +359,24 @@ namespace InfoVizProject
 
             public int GetClosestLine(int x, int y)
             {
-                y = (this.Control.ComponentSize.Height + this.Control.AbsoluteSize.Height)/2 - y;
-                x = (this.Control.AbsoluteSize.Height - this.Control.ComponentSize.Height) / 2 + x;
+                //adjust for viewport
+
+                x = x - (int)this.viewport.X;
+                x = Math.Max(x, 0);
+
+                y = (this.viewport.Height - (y - this.viewport.Y));
+                y = Math.Max(y, 0);
+
+                System.Diagnostics.Debug.Print("X/Y:" + x.ToString() + "/" + y.ToString());
+
+                float fx = ((float)(x) / (float)(viewport.Width) - this.Translation.X / viewport.Width ) / this.Zoom;
+                float fy = ((float)(y) / (float)(viewport.Height) - this.Translation.Y / viewport.Height) / this.Zoom;
+
                 float minDistance = float.MaxValue;
                 int minIndex = -1;
                 for (int i = 0; i < this.lines.Count; ++i)
                 {
-                    float this_distance = this.lines[i].GetDistanceToPoint((float)x, (float)y);
+                    float this_distance = this.lines[i].GetDistanceToPoint(fx, fy);
                     if (this_distance < minDistance)
                     {
                         minIndex = i;
@@ -363,6 +393,8 @@ namespace InfoVizProject
                 this._inited = true;
             }
 
+            private Viewport viewport;
+
             protected override void Render(Device device)
             {
                 if (!_inited) Initialize(device);
@@ -371,16 +403,28 @@ namespace InfoVizProject
                 this.device.RenderState.CullMode = Cull.None;
 
                 Material mat = new Material();
+                Material edge = new Material();
+                edge.Emissive = Color.FromArgb(0x70,Color.Black);
+                edge.Diffuse = Color.FromArgb(0x70, Color.Black);
+                edge.Ambient = Color.FromArgb(0x70, Color.Black);
 
                 int w = Control.AbsoluteSize.Width;
                 int h = Control.AbsoluteSize.Height;
 
+                Viewport oldView = this.device.Viewport;
+
+                this.viewport = oldView;
+                this.viewport.Width -= (int)this.XAxisSpacing;
+                this.viewport.Height -= (int)this.YAxisSpacing;
+                this.viewport.X += (int)this.XAxisSpacing;
+
+                this.device.Viewport = this.viewport;
                 this.device.VertexFormat = CustomVertex.PositionOnly.Format;
-                this.device.Transform.Projection = Matrix.OrthoLH(w, h, 0.01f, 100.0f);
-                this.device.Transform.View = Matrix.LookAtLH(new Vector3(w/2, h/2, -10.0f),
-                                                                new Vector3(w/2, h/2, 0.0f),
+                this.device.Transform.Projection = Matrix.OrthoLH(1.0f, 1.0f, 0.01f, 100.0f);
+                this.device.Transform.View = Matrix.LookAtLH(new Vector3(1.0f / 2, 1.0f / 2, -10.0f),
+                                                                new Vector3(1.0f / 2, 1.0f / 2, 0.0f),
                                                                 new Vector3(0.0f, 1.0f, 0.0f));
-                this.device.Transform.World = Matrix.Identity;
+                this.device.Transform.World = Matrix.Scaling(Zoom,Zoom,1.0f) * Matrix.Translation(this.Translation.X/this.viewport.Width,this.Translation.Y/this.viewport.Height,0.0f);
                 this.device.RenderState.DiffuseMaterialSource = ColorSource.Material;
                 this.device.RenderState.EmissiveMaterialSource = ColorSource.Material;
                 this.device.RenderState.Lighting = true;
@@ -408,7 +452,9 @@ namespace InfoVizProject
                     this.device.Material = mat;
 
                     // Draws the apropriate line in the color specified by the colormap
-                    this.device.DrawUserPrimitives(PrimitiveType.TriangleStrip, l.Vertices.Length - 2, l.Vertices);
+                    this.device.DrawIndexedUserPrimitives(PrimitiveType.TriangleStrip, 0, l.Vertices.Length, l.Vertices.Length - 2, l.FillIndices, false, l.Vertices);
+                    this.device.Material = edge;
+                    this.device.DrawIndexedUserPrimitives(PrimitiveType.LineStrip, 0, l.Vertices.Length, l.Vertices.Length, l.EdgeIndices, false, l.Vertices);
                 }
 
                 for (int i = 0; i < this.selectedIndexes.Count;++i )
@@ -418,8 +464,13 @@ namespace InfoVizProject
                     mat.Diffuse = this.SelectedIndexColor;
                     mat.Ambient = this.SelectedIndexColor;
                     this.device.Material = mat;
-                    this.device.DrawUserPrimitives(PrimitiveType.TriangleStrip, l.Vertices.Length - 2, l.Vertices);
+                    this.device.DrawIndexedUserPrimitives(PrimitiveType.TriangleStrip, 0, l.Vertices.Length, l.Vertices.Length - 2, l.FillIndices, false, l.Vertices);
+                    this.device.Material = edge;
+                    this.device.DrawIndexedUserPrimitives(PrimitiveType.LineStrip, 0, l.Vertices.Length, l.Vertices.Length, l.EdgeIndices, false, l.Vertices);
                 }
+
+
+                this.device.Viewport = oldView;
             }
 
             private void CreateLines()
@@ -476,8 +527,6 @@ namespace InfoVizProject
                         }
                         else lData[iTime].X = 0.5f;
 
-                        lData[iTime].X *= Control.AbsoluteSize.Width;
-                        lData[iTime].X += XAxisSpacing;
 
                         if (this.DataLineYIndex >= 0)
                         {
@@ -487,17 +536,16 @@ namespace InfoVizProject
                         }
                         else lData[iTime].Y = 0.5f;
 
-                        lData[iTime].Y *= Control.AbsoluteSize.Height - 2*YAxisSpacing;
-                        lData[iTime].Y += YAxisSpacing;
+                        float realScale = DataLineThicknessScale / (this.Control.AbsoluteSize.Width + this.Control.AbsoluteSize.Height) * 4.0f;
 
                         if (this.DataLineThicknessIndex >= 0)
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
                             float val = (float)data.GetValue(loc);
                             lData[iTime].Z = (val - minData[this.DataLineThicknessIndex]) / (maxData[this.DataLineThicknessIndex] - minData[this.DataLineThicknessIndex]);
-                            lData[iTime].Z *= this.DataLineThicknessScale;
+                            lData[iTime].Z *= realScale;
                         }
-                        else lData[iTime].Z = DataLineThicknessScale;
+                        else lData[iTime].Z = 0.5f*realScale;
 
                     }
 

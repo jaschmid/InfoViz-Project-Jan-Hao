@@ -60,7 +60,19 @@ namespace InfoVizProject
         public int DataLineXIndex
         {
             get { return this.lineLayer.DataLineXIndex; }
-            set { this.lineLayer.DataLineXIndex = value; }
+            set { 
+                this.lineLayer.DataLineXIndex = value;
+
+                if (DataLabels != null)
+                {
+                    if(value == -1)
+                        this.axisLayer.XAxisLabel = "None";
+                    else
+                        this.axisLayer.XAxisLabel = this.DataLabels[value];
+                }
+                else
+                    this.axisLayer.XAxisLabel = "X Axis";
+            }
         }
         public float DataLineThicknessScale
         {
@@ -70,7 +82,20 @@ namespace InfoVizProject
         public int DataLineYIndex
         {
             get { return this.lineLayer.DataLineYIndex; }
-            set { this.lineLayer.DataLineYIndex = value; }
+            set
+            {
+                this.lineLayer.DataLineYIndex = value;
+
+                if (DataLabels != null)
+                {
+                    if (value == -1)
+                        this.axisLayer.YAxisLabel = "None";
+                    else
+                        this.axisLayer.YAxisLabel = this.DataLabels[value];
+                }
+                else
+                    this.axisLayer.YAxisLabel = "Y Axis";
+            }
         }
         public int DataLineThicknessIndex
         {
@@ -91,15 +116,30 @@ namespace InfoVizProject
             this.lineLayer.XAxisSpacing = XAxisSize;
             this.lineLayer.YAxisSpacing = YAxisSize;
         }
-        public void SetAxisLabels(string XAxisLabel, string YAxisLabel)
+        public bool AllowCustomizeXAxis { set { this.interactionLayer.AllowCustomizeXAxis = value; } get { return this.interactionLayer.AllowCustomizeXAxis; } }
+        public bool AllowCustomizeYAxis { set { this.interactionLayer.AllowCustomizeYAxis = value; } get { return this.interactionLayer.AllowCustomizeYAxis; } }
+        public bool AllowCustomizeThickness { set { this.interactionLayer.AllowCustomizeThickness = value; } get { return this.interactionLayer.AllowCustomizeThickness; } }
+
+        private List<string> dataLabels;
+        public List<string> DataLabels
         {
-            this.axisLayer.XAxisLabel = XAxisLabel;
-            this.axisLayer.YAxisLabel = YAxisLabel;
+            get
+            {
+                return dataLabels;
+            }
+            set
+            {
+                dataLabels = value;
+                if (value != null && this.lineLayer.DataLineYIndex != -1)
+                    this.axisLayer.YAxisLabel = this.DataLabels[this.lineLayer.DataLineYIndex];
+                if (value != null && this.lineLayer.DataLineXIndex != -1)
+                    this.axisLayer.XAxisLabel = this.DataLabels[this.lineLayer.DataLineXIndex];
+            }
         }
 
-        public int GetClosestLine(int sourceIndex)
+        public List<int> GetClosestLine(int sourceIndex)
         {
-            return 0;
+            return lineLayer.GetClosestLinesToLine(sourceIndex);
         }
 
         public class SelectionUpdatedEventArgs : System.EventArgs
@@ -110,6 +150,18 @@ namespace InfoVizProject
         public delegate void SelectionUpdatedEventHandler(object sender, SelectionUpdatedEventArgs e);
 
         public event SelectionUpdatedEventHandler SelectionChanged;
+
+        internal System.Windows.Forms.Control iRenderTarget
+        {
+            get
+            {
+                return this.RenderTarget;
+            }
+            set
+            {
+                this.RenderTarget = value;
+            }
+        }
 
         public CustomComponent()
             : base()
@@ -142,7 +194,7 @@ namespace InfoVizProject
             layers.Add(this.axisLayer);
 
 
-            this.interactionLayer = new InteractionLayer(this.lineLayer);
+            this.interactionLayer = new InteractionLayer(this.lineLayer,this);
             this.interactionLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
             this.interactionLayer.SelectionChanged += new SelectionUpdatedEventHandler(InternalSelectionUpdatedEvent);
             layers.Add(this.interactionLayer);
@@ -156,6 +208,20 @@ namespace InfoVizProject
             selected.Add(201);
             selected.Add(202);
             selected.Add(203);
+
+            // default settings
+            this.TimeSourceAxis = Axis.Z;
+            this.LineSourceAxis = Axis.Y;
+            this.DataSourceAxis = Axis.X;
+            this.DataLineXIndex = 0;
+            this.DataLineYIndex = 1;
+            this.DataLineThicknessIndex = -1;
+            this.DataLineThicknessScale = 1.5f;
+            this.ColorMap = null;
+            this.SelectedIndexColor = Color.Red;
+            this.AllowCustomizeXAxis = true;
+            this.AllowCustomizeYAxis = true;
+            this.AllowCustomizeThickness = true;
 
             this.SetSelectedIndexes(selected);
 
