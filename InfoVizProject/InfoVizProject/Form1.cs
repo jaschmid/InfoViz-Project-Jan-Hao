@@ -27,9 +27,6 @@ namespace InfoVizProject
 
         List<int> countryIdList = new List<int>();
 
-        private bool controlKeyDown = false;
-        
-        
 
         private ExcelDataProvider excelDataProvider;
         private YearSliceDataTransformer yearSliceDataTransformer;
@@ -166,11 +163,6 @@ namespace InfoVizProject
             edges.Add(0.4f);
             edges.Add(0.2f);
             interactiveColorLegend.EdgeValuesList = edges;
-            //interactiveColorLegend.EdgeValues = globalEdge;
-            //List<float> postiton = new List<float>() ;
-            //postiton.Add(0.5f);
-            //interactiveColorLegend.SetValueSlider(postiton,InteractiveColorLegend.SliderLinePosition.Center,InteractiveColorLegend.TextPosition.RightOrBottom,true);
-            //interactiveColorLegend.MinTextPosition = InteractiveColorLegend.TextPosition.RightOrBottom;
             float min = 0;
             float max = 0;
             yearSliceDataTransformer.GetDataCube().GetColumnMaxMin(choroplethMapSelectedIndex, out max, out min);

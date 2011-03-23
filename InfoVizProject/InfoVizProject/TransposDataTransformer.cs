@@ -40,9 +40,6 @@ namespace InfoVizProject
                         outputData[j, k, 0] = inputData[selectedIndicator,selectedCountry[j] ,k];
                     }
                 }
-            
-            
-            
             _dataCube.DataArray = outputData;
         }
     }
