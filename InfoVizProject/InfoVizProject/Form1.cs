@@ -268,7 +268,7 @@ namespace InfoVizProject
             //colorMap.AddColorMapPart(new LinearHsvColorMapPart(200,40,0.1f,0.5f));
             colorMapForTableLens = new ColorMap();
             
-            colorMapForTableLens.AddColorMapPart(new LinearRgbColorMapPart(Color.White,Color.Red));
+            colorMapForTableLens.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(20,0,0),Color.Red));
             
         }
 
