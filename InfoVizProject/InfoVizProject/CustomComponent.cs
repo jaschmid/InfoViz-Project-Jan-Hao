@@ -110,6 +110,7 @@ namespace InfoVizProject
         public void SetSelectedIndexes(List<int> indexes)
         {
             this.lineLayer.SetSelectedIndexes(indexes);
+            this.interactionLayer.SelectedItems = indexes;
         }
         public void SetAxisSize(int XAxisSize, int YAxisSize)
         {
