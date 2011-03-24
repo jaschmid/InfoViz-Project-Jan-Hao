@@ -23,9 +23,9 @@ namespace InfoVizProject
 
         private int choroplethMapSelectedIndex;
         private int choroplethMapCurrentYear = 1960;
-        private List<int> selectedCountry = new List<int>() { 100,200};
+        private List<int> selectedCountry = new List<int>() {0,1 };
 
-        List<int> countryIdList = new List<int>();
+        List<int> regionIndexs = new List<int>();
 
 
         private ExcelDataProvider excelDataProvider;
@@ -321,14 +321,14 @@ namespace InfoVizProject
                     selectedCountry.Add(temp);
 
                 }
-                if (countryIdList.Count == 2)
+                if (regionIndexs.Count == 2)
                 {
-                    int temp = countryIdList[1];
-                    countryIdList.Clear();
-                    countryIdList.Add(temp);
+                    int temp = regionIndexs[1];
+                    regionIndexs.Clear();
+                    regionIndexs.Add(temp);
                 }
 
-                countryIdList.Add(index);
+                regionIndexs.Add(index);
                 selectedCountry.Add(mappedIndex);
                 transposeDataTransformer.SelectedCountry = selectedCountry;
                 transposeDataTransformer.CommitChanges();
@@ -341,14 +341,10 @@ namespace InfoVizProject
                 tablelens.HeadersList = countrylist;
                 tablelens.Invalidate();
 
-
+                List<int> currentSelectedIndexes = mapPolygonLayer.GetSelectedIndexes();
+                
                 mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
-                mapPolygonLayer.SetSelectedIndexes(countryIdList);
-
-
-
-                mapBorderLayer.SetSelectedIndexes(selectedCountry);
-                mapBorderLayer.Invalidate();
+                mapPolygonLayer.SetSelectedIndexes(regionIndexs);
                 choroplethMap.Invalidate();
             }
             
@@ -362,18 +358,52 @@ namespace InfoVizProject
 
         private void customComponent_SelectionUpdatedEvent(object sender, CustomComponent.SelectionUpdatedEventArgs e)
         {
-            List<int> selectedItems = new List<int>();
+            
+            
+            
             foreach (int i in e.SelectedItems)
             {
                 int mappedIndex = 0;
+                int regionIndex = 0;
                 stringIndexMapper.TryBackwardMapIndex(i, out mappedIndex);
-                if(mappedIndex != -1)
-                    selectedItems.Add(mappedIndex);
+                stringIndexMapper.TryBackwardMapIndex(mappedIndex, out regionIndex);
+                if (mappedIndex != -1 && i > 0)
+                {
+                    if (selectedCountry.Count == 2)
+                    {
+                        int temp = selectedCountry[1];
+                        selectedCountry.Clear();
+                        selectedCountry.Add(temp);
+
+                    }
+                    selectedCountry.Add(mappedIndex);
+                    if (regionIndexs.Count == 2)
+                    {
+                        int temp = regionIndexs[1];
+                        regionIndexs.Clear();
+                        regionIndexs.Add(temp);
+                    }
+
+                    regionIndexs.Add(regionIndex);
+                }
             }
 
-            this.mapPolygonLayer.SetSelectedIndexes(selectedItems);
+            mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
+            mapPolygonLayer.SetSelectedIndexes(regionIndexs);
             this.mapPolygonLayer.Invalidate();
             this.choroplethMap.Invalidate();
+
+            transposeDataTransformer.SelectedCountry = selectedCountry;
+            transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
+            transposeDataTransformer.CommitChanges();
+            tablelens.Input = transposeDataTransformer.GetDataCube();
+            List<string> countrylist = new List<string>();
+            for (int i = 0; i < selectedCountry.Count; i++)
+            {
+                countrylist.Add(excelDataProvider.RowIds[selectedCountry[i]]);
+            }
+            tablelens.HeadersList = countrylist;
+            tablelens.Invalidate();
         }
 
         private void comboBox_choropleth_SelectedIndexChanged(object sender, EventArgs e)
