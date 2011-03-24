@@ -111,7 +111,7 @@ namespace InfoVizProject
         {
             this.lineLayer.SetSelectedIndexes(indexes);
         }
-        public void SetAxisSize(float XAxisSize, float YAxisSize)
+        public void SetAxisSize(int XAxisSize, int YAxisSize)
         {
             this.lineLayer.XAxisSpacing = XAxisSize;
             this.lineLayer.YAxisSpacing = YAxisSize;
@@ -182,8 +182,8 @@ namespace InfoVizProject
 
             this.lineLayer = new LineLayer();
             this.lineLayer.Control.SetOuterMargins(10, GavControl.DistanceType.Absolute);
-            this.lineLayer.XAxisSpacing = 30.0f;
-            this.lineLayer.YAxisSpacing = 30.0f;
+            this.lineLayer.XAxisSpacing = 30;
+            this.lineLayer.YAxisSpacing = 30;
             layers.Add(this.lineLayer);
 
 
