@@ -38,11 +38,13 @@
             this.components = new System.ComponentModel.Container();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.startYearLabel = new System.Windows.Forms.Label();
             this.textBoxYear = new System.Windows.Forms.TextBox();
             this.comboBox_choropleth = new System.Windows.Forms.ComboBox();
             this.trackBarYearSelecter = new System.Windows.Forms.TrackBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this.toolTipChoropleth = new System.Windows.Forms.ToolTip(this.components);
+            this.endYearLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -81,13 +83,24 @@
             // 
             // splitContainer2.Panel1
             // 
+            this.splitContainer2.Panel1.Controls.Add(this.endYearLabel);
+            this.splitContainer2.Panel1.Controls.Add(this.startYearLabel);
             this.splitContainer2.Panel1.Controls.Add(this.textBoxYear);
             this.splitContainer2.Panel1.Controls.Add(this.comboBox_choropleth);
             this.splitContainer2.Panel1.Controls.Add(this.trackBarYearSelecter);
-            this.splitContainer2.Panel1.MouseHover += new System.EventHandler(this.splitContainer2_Panel1_MouseHover);
             this.splitContainer2.Size = new System.Drawing.Size(503, 562);
             this.splitContainer2.SplitterDistance = 313;
             this.splitContainer2.TabIndex = 0;
+            // 
+            // startYearLabel
+            // 
+            this.startYearLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.startYearLabel.Location = new System.Drawing.Point(0, 255);
+            this.startYearLabel.Name = "startYearLabel";
+            this.startYearLabel.Size = new System.Drawing.Size(48, 13);
+            this.startYearLabel.TabIndex = 6;
+            this.startYearLabel.Text = "dgadfgsd";
+            this.startYearLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // textBoxYear
             // 
@@ -134,6 +147,16 @@
             this.splitContainer3.SplitterDistance = 140;
             this.splitContainer3.TabIndex = 0;
             // 
+            // endYearLabel
+            // 
+            this.endYearLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.endYearLabel.Location = new System.Drawing.Point(458, 255);
+            this.endYearLabel.Name = "endYearLabel";
+            this.endYearLabel.Size = new System.Drawing.Size(42, 13);
+            this.endYearLabel.TabIndex = 7;
+            this.endYearLabel.Text = "label1";
+            this.endYearLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -170,6 +193,8 @@
         private System.Windows.Forms.TrackBar trackBarYearSelecter;
         private System.Windows.Forms.TextBox textBoxYear;
         private System.Windows.Forms.ToolTip toolTipChoropleth;
+        private System.Windows.Forms.Label startYearLabel;
+        private System.Windows.Forms.Label endYearLabel;
         
 
     }

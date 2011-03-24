@@ -49,6 +49,7 @@ namespace InfoVizProject
         private ViewManager viewManager;
         private CustomComponent component;
         private ColorMap colorMap;
+        private ColorMap colorMapForTableLens;
 
         public System.EventHandler keydown;
 
@@ -85,7 +86,9 @@ namespace InfoVizProject
             tablelens = new TableLens();
             transposeDataTransformer.SelectedCountry = selectedCountry;
             tablelens.Input = transposeDataTransformer.GetDataCube();
-            tablelens.ColorMap = colorMap;
+            colorMapForTableLens.Input = tablelens.Input;
+
+            tablelens.ColorMap = colorMapForTableLens;
             List<string> countrylist = new List<string>();
             for (int i = 0; i < selectedCountry.Count; i++)
             {
@@ -140,6 +143,8 @@ namespace InfoVizProject
             this.trackBarYearSelecter.LargeChange = 10;
             this.trackBarYearSelecter.Minimum = 1960;
             this.trackBarYearSelecter.Maximum = 2008;
+            this.startYearLabel.Text = this.trackBarYearSelecter.Minimum.ToString();
+            this.endYearLabel.Text = this.trackBarYearSelecter.Maximum.ToString();
             
         }
 
@@ -248,6 +253,7 @@ namespace InfoVizProject
         private void InitializeColor()
         {
             colorMap = new ColorMap();
+            
             colorMap.Input = yearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.CadetBlue,Color.GhostWhite));
@@ -259,6 +265,10 @@ namespace InfoVizProject
             
             colorMap.NaNColor = Color.Black;
             //colorMap.AddColorMapPart(new LinearHsvColorMapPart(200,40,0.1f,0.5f));
+            colorMapForTableLens = new ColorMap();
+            
+            colorMapForTableLens.AddColorMapPart(new LinearRgbColorMapPart(Color.White,Color.Red));
+            
         }
 
         private void InitializeMap()
@@ -333,6 +343,8 @@ namespace InfoVizProject
                 transposeDataTransformer.SelectedCountry = selectedCountry;
                 transposeDataTransformer.CommitChanges();
                 tablelens.Input = transposeDataTransformer.GetDataCube();
+                colorMapForTableLens.Input = tablelens.Input;
+                tablelens.ColorMap = colorMapForTableLens;
                 List<string> countrylist = new List<string>();
                 for (int i = 0; i < selectedCountry.Count; i++)
                 {
@@ -390,13 +402,15 @@ namespace InfoVizProject
 
             mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
             mapPolygonLayer.SetSelectedIndexes(regionIndexs);
-            this.mapPolygonLayer.Invalidate();
+            //this.mapPolygonLayer.Invalidate();
             this.choroplethMap.Invalidate();
 
             transposeDataTransformer.SelectedCountry = selectedCountry;
             transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
             transposeDataTransformer.CommitChanges();
             tablelens.Input = transposeDataTransformer.GetDataCube();
+            colorMapForTableLens.Input = tablelens.Input;
+            tablelens.ColorMap = colorMapForTableLens;
             List<string> countrylist = new List<string>();
             for (int i = 0; i < selectedCountry.Count; i++)
             {
@@ -448,11 +462,6 @@ namespace InfoVizProject
             interactiveColorLegend.MinValue = min;
 
             viewManager.InvalidateAll();
-        }
-
-        private void splitContainer2_Panel1_MouseHover(object sender, EventArgs e)
-        {
-            
         }
 
     }
