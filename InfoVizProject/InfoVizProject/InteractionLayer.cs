@@ -249,18 +249,6 @@ namespace InfoVizProject
                         this.rClickMenu.MenuItems.Add(this.findClosest);
 
                         rClickMenu.Show(this.parent.iRenderTarget, e.Location);
-
-                        if (this.selectedItems != null && this.selectedItems.Count > 0)
-                        {
-                            List<int> proposed = lineLayer.GetClosestLinesToLine(this.selectedItems[0]);
-                            this.selectedItems = new List<int>(this.selectedItems);
-                            if (proposed.Count > 0)
-                                this.selectedItems.Add(proposed[0]);
-                            this.lineLayer.SetSelectedIndexes(this.selectedItems);
-                            SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
-                            eventArgs.SelectedItems = this.selectedItems;
-                            this.SelectionChanged(this, eventArgs);
-                        }
                     }
                 }
                 return true;
@@ -300,9 +288,15 @@ namespace InfoVizProject
 
             private void selectedFindCloseLine()
             {
-                List<int> proposed = lineLayer.GetClosestLinesToLine(this.selectedItems[0]);
+                int old = this.selectedItems[0];
+                List<int> proposed = lineLayer.GetClosestLinesToLine(old);
+                List<int> selected = new List<int>();
                 if (proposed.Count > 0)
-                    this.selectedItems.Add(proposed[0]);
+                {
+                    selected.Add(proposed[0]);
+                    selected.Add(old);
+                }
+                this.SelectedItems = selected;
                 this.lineLayer.SetSelectedIndexes(this.selectedItems);
                 SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
                 eventArgs.SelectedItems = this.selectedItems;

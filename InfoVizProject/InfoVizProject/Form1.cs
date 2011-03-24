@@ -23,9 +23,8 @@ namespace InfoVizProject
 
         private int choroplethMapSelectedIndex;
         private int choroplethMapCurrentYear = 1960;
-        private List<int> selectedCountry = new List<int>() {0,1 };
-
-        List<int> regionIndexs = new List<int>();
+        private List<int> mapSelectedIndices = new List<int>();
+        private List<int> dataSelectedIndices = new List<int>(){0,1};
 
 
         private ExcelDataProvider excelDataProvider;
@@ -84,13 +83,13 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             tablelens = new TableLens();
-            transposeDataTransformer.SelectedCountry = selectedCountry;
+            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
             tablelens.Input = transposeDataTransformer.GetDataCube();
             colorMapForTableLens.Input = tablelens.Input;
 
             tablelens.ColorMap = colorMapForTableLens;
             List<string> countrylist = new List<string>();
-            for (int i = 0; i < selectedCountry.Count; i++)
+            for (int i = 0; i < mapSelectedIndices.Count; i++)
             {
                 countrylist.Add(excelDataProvider.RowIds[i]);
             }
@@ -120,7 +119,7 @@ namespace InfoVizProject
             yearSliceDataTransformer.CurrentSelectedYear = 1960;
             transposeDataTransformer = new TransposDataTransformer();
             transposeDataTransformer.Input = excelDataProvider;
-            transposeDataTransformer.SelectedCountry = selectedCountry;
+            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
             transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
             transposeDataTransformer.GetDataCube();
             
@@ -233,6 +232,8 @@ namespace InfoVizProject
             component.ColorMap = colorMap;
             this.component.SelectionChanged += new CustomComponent.SelectionUpdatedEventHandler(customComponent_SelectionUpdatedEvent);
             this.component.DataLabels = this.excelDataProvider.ColumnHeaders;
+            this.component.SelectedIndexColor = Color.Yellow;
+            this.component.SetSelectedIndexes(this.dataSelectedIndices);
         }
 
         private void InitializeData()
@@ -324,40 +325,47 @@ namespace InfoVizProject
             if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Right && index > 0 && mappedIndex != -1)
             {
                 gavToolTip.Hide();
-                if (selectedCountry.Count == 2)
+                if (mapSelectedIndices.Count == 2)
                 {
-                    int temp = selectedCountry[1];
-                    selectedCountry.Clear();
-                    selectedCountry.Add(temp);
+                    int temp = mapSelectedIndices[1];
+                    mapSelectedIndices.Clear();
+                    mapSelectedIndices.Add(temp);
 
                 }
-                if (regionIndexs.Count == 2)
+                if (dataSelectedIndices.Count == 2)
                 {
-                    int temp = regionIndexs[1];
-                    regionIndexs.Clear();
-                    regionIndexs.Add(temp);
+                    int temp = dataSelectedIndices[1];
+                    dataSelectedIndices.Clear();
+                    dataSelectedIndices.Add(temp);
                 }
 
-                regionIndexs.Add(index);
-                selectedCountry.Add(mappedIndex);
-                transposeDataTransformer.SelectedCountry = selectedCountry;
+                dataSelectedIndices.Add(mappedIndex);
+                mapSelectedIndices.Add(index);
+
+                transposeDataTransformer.SelectedCountry = dataSelectedIndices;
                 transposeDataTransformer.CommitChanges();
+
                 tablelens.Input = transposeDataTransformer.GetDataCube();
+
                 colorMapForTableLens.Input = tablelens.Input;
+
                 tablelens.ColorMap = colorMapForTableLens;
                 List<string> countrylist = new List<string>();
-                for (int i = 0; i < selectedCountry.Count; i++)
+                for (int i = 0; i < dataSelectedIndices.Count; i++)
                 {
-                    countrylist.Add(excelDataProvider.RowIds[selectedCountry[i]]);
+                    countrylist.Add(excelDataProvider.RowIds[dataSelectedIndices[i]]);
                 }
                 tablelens.HeadersList = countrylist;
                 tablelens.Invalidate();
 
                 List<int> currentSelectedIndexes = mapPolygonLayer.GetSelectedIndexes();
+
                 
                 mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
-                mapPolygonLayer.SetSelectedIndexes(regionIndexs);
+                mapPolygonLayer.SetSelectedIndexes(mapSelectedIndices);
                 choroplethMap.Invalidate();
+                this.component.SetSelectedIndexes(dataSelectedIndices);
+                this.component.Invalidate();
             }
             
         }
@@ -366,6 +374,11 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             stringIndexMapper = new StringIndexMapper(mapData.RegionFullNames, excelDataProvider.RowIds);
+            int mapIndex;
+            this.stringIndexMapper.TryBackwardMapIndex(this.dataSelectedIndices[1],out mapIndex);
+            this.mapSelectedIndices.Add(mapIndex);
+            this.stringIndexMapper.TryBackwardMapIndex(this.dataSelectedIndices[0], out mapIndex);
+            this.mapSelectedIndices.Add(mapIndex);
         }
 
         private void customComponent_SelectionUpdatedEvent(object sender, CustomComponent.SelectionUpdatedEventArgs e)
@@ -375,46 +388,51 @@ namespace InfoVizProject
             
             foreach (int i in e.SelectedItems)
             {
-                int mappedIndex = 0;
-                int regionIndex = 0;
+                int mappedIndex = i;
                 stringIndexMapper.TryBackwardMapIndex(i, out mappedIndex);
-                stringIndexMapper.TryBackwardMapIndex(mappedIndex, out regionIndex);
                 if (mappedIndex != -1 && i > 0)
                 {
-                    if (selectedCountry.Count == 2)
+                    if (mapSelectedIndices.Count == 2)
                     {
-                        int temp = selectedCountry[1];
-                        selectedCountry.Clear();
-                        selectedCountry.Add(temp);
+                        int temp = mapSelectedIndices[1];
+                        mapSelectedIndices.Clear();
+                        mapSelectedIndices.Add(temp);
 
                     }
-                    selectedCountry.Add(mappedIndex);
-                    if (regionIndexs.Count == 2)
+                    mapSelectedIndices.Add(mappedIndex);
+                }
+
+                if(i != -1 && i > 0)
+                {
+                    if (dataSelectedIndices.Count == 2)
                     {
-                        int temp = regionIndexs[1];
-                        regionIndexs.Clear();
-                        regionIndexs.Add(temp);
+                        int temp = dataSelectedIndices[1];
+                        dataSelectedIndices.Clear();
+                        dataSelectedIndices.Add(temp);
                     }
 
-                    regionIndexs.Add(regionIndex);
+                    dataSelectedIndices.Add(i);
                 }
             }
 
             mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
-            mapPolygonLayer.SetSelectedIndexes(regionIndexs);
+            mapPolygonLayer.SetSelectedIndexes(mapSelectedIndices);
+
             //this.mapPolygonLayer.Invalidate();
             this.choroplethMap.Invalidate();
 
-            transposeDataTransformer.SelectedCountry = selectedCountry;
+            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
             transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
             transposeDataTransformer.CommitChanges();
+
             tablelens.Input = transposeDataTransformer.GetDataCube();
+
             colorMapForTableLens.Input = tablelens.Input;
             tablelens.ColorMap = colorMapForTableLens;
             List<string> countrylist = new List<string>();
-            for (int i = 0; i < selectedCountry.Count; i++)
+            for (int i = 0; i < dataSelectedIndices.Count; i++)
             {
-                countrylist.Add(excelDataProvider.RowIds[selectedCountry[i]]);
+                countrylist.Add(excelDataProvider.RowIds[dataSelectedIndices[i]]);
             }
             tablelens.HeadersList = countrylist;
             tablelens.Invalidate();
