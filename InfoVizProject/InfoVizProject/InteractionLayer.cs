@@ -189,10 +189,12 @@ namespace InfoVizProject
                         this.movementLag += relative;
                         if (this.movementLag.LengthSq() > 3.0f)
                         {
+                            Vector2 oldTrans = this.lineLayer.Translation * (1.0f/this.lineLayer.Zoom);
                             this.lineLayer.Zoom += (float)this.movementLag.Y / 100.0f;
+                            oldTrans *= this.lineLayer.Zoom;
                             this.lineLayer.Translation = new Vector2(
-                                    this.lineLayer.Translation.X - this.lastMousePosition.X * (float)this.movementLag.Y / 100.0f,
-                                    this.lineLayer.Translation.Y - (this.Control.AbsoluteSize.Height - this.lastMousePosition.Y) * (float)this.movementLag.Y / 100.0f);
+                                    oldTrans.X - this.lastMousePosition.X * (float)this.movementLag.Y / 100.0f,
+                                    oldTrans.Y - (this.Control.AbsoluteSize.Height - this.lastMousePosition.Y) * (float)this.movementLag.Y / 100.0f);
                             this.scaling = true;
                             parent.Invalidate();
                         }
@@ -240,7 +242,7 @@ namespace InfoVizProject
                             this.PopulateAxisSource(this.thicknessSource, this.parent.DataLineThicknessIndex, this.selectedThicknessIndex);
                             this.rClickMenu.MenuItems.Add(this.thicknessSource);
                         }
-                        if (this.selectedItems.Count == 0)
+                        if (this.selectedItems == null || this.selectedItems.Count == 0)
                             this.findClosest.Enabled = false;
                         else
                             this.findClosest.Enabled = true;

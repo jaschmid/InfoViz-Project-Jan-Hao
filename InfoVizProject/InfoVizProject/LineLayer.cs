@@ -37,6 +37,25 @@ namespace InfoVizProject
                     get;
                 }
 
+                private float zoom;
+                public float Zoom
+                {
+                    set
+                    {
+                        zoom = value;
+                        BuildLines();
+                    }
+                    get
+                    {
+                        return zoom;
+                    }
+                }
+
+                public Line(float zoom)
+                {
+                    this.zoom = zoom;
+                }
+
                 private void BuildLines()
                 {
                     if (data == null || data.Length < 2)
@@ -53,12 +72,12 @@ namespace InfoVizProject
                     Vector4 v = data[index+1]-data[index];
                     float angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z;
-                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z;
+                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
                     this.Vertices[index * 2 + 0].Z = 0.5f;
 
-                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z;
-                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z;
+                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
                     this.Vertices[index * 2 + 1].Z = 0.5f;
 
                     this.PositionData[index].X = (float)this.data[index].X;
@@ -70,12 +89,12 @@ namespace InfoVizProject
                         v = data[index + 1] - data[index - 1];
                         angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                        this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z;
-                        this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z;
+                        this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
+                        this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
                         this.Vertices[index * 2 + 0].Z = 0.5f;
 
-                        this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z;
-                        this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z;
+                        this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
+                        this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
                         this.Vertices[index * 2 + 1].Z = 0.5f;
 
                         this.PositionData[index].X = (float)this.data[index].X;
@@ -87,12 +106,12 @@ namespace InfoVizProject
                     v = data[index] - data[index - 1];
                     angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z;
-                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z;
+                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
                     this.Vertices[index * 2 + 0].Z = 0.5f;
 
-                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z;
-                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z;
+                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
                     this.Vertices[index * 2 + 1].Z = 0.5f;
 
                     this.PositionData[index].X = (float)this.data[index].X;
@@ -245,56 +264,135 @@ namespace InfoVizProject
             private Microsoft.DirectX.Direct3D.Line _d3dLine;
 
             // Settings
+            private Axis lineSourceAxis;
             public Axis LineSourceAxis
             {
-                get;
-                set;
+                get
+                {
+                    return lineSourceAxis;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    lineSourceAxis = value;
+                }
             }
+            private Axis timeSourceAxis;
             public Axis TimeSourceAxis
             {
-                get;
-                set;
+                get
+                {
+                    return timeSourceAxis;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    timeSourceAxis = value;
+                }
             }
+            private Axis dataSourceAxis;
             public Axis DataSourceAxis
             {
-                get;
-                set;
+                get
+                {
+                    return dataSourceAxis;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    dataSourceAxis = value;
+                }
             }
+            private int dataLineXIndex;
             public int DataLineXIndex
             {
-                get;
-                set;
+                get
+                {
+                    return dataLineXIndex;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    dataLineXIndex = value;
+                }
             }
+            private int dataLineYIndex;
             public int DataLineYIndex
             {
-                get;
-                set;
+                get
+                {
+                    return dataLineYIndex;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    dataLineYIndex = value;
+                }
             }
+            private float dataLineThicknessScale;
             public float DataLineThicknessScale
             {
-                get;
-                set;
+                get
+                {
+                    return dataLineThicknessScale;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    dataLineThicknessScale = value;
+                }
             }
+            private int dataLineThicknessIndex;
             public int DataLineThicknessIndex
             {
-                get;
-                set;
+                get
+                {
+                    return dataLineThicknessIndex;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    dataLineThicknessIndex = value;
+                }
             }
+            private Color selectedIndexColor;
             public Color SelectedIndexColor
             {
-                get;
-                set;
+                get
+                {
+                    return selectedIndexColor;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    selectedIndexColor = value;
+                }
             }
-
-            public float YAxisSpacing
+            private int yAxisSpacing;
+            public int YAxisSpacing
             {
-                get;
-                set;
+                get
+                {
+                    return yAxisSpacing;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    yAxisSpacing = value;
+                }
             }
-            public float XAxisSpacing
+            private int xAxisSpacing;
+            public int XAxisSpacing
             {
-                get;
-                set;
+                get
+                {
+                    return xAxisSpacing;
+                }
+                set
+                {
+                    bLinesChanged = true;
+                    xAxisSpacing = value;
+                }
             }
 
             public Vector2 Translation
@@ -303,10 +401,16 @@ namespace InfoVizProject
                 set;
             }
 
+            private float zoom;
             public float Zoom
             {
-                get;
-                set;
+                get { return zoom; }
+                set
+                {
+                    zoom = value;
+                    foreach (Line l in this.lines)
+                        l.Zoom = value;
+                }
             }
             
             private List<int> selectedIndexes;
@@ -395,10 +499,16 @@ namespace InfoVizProject
 
             private Viewport viewport;
 
+            bool bLinesChanged = false;
+
             protected override void Render(Device device)
             {
                 if (!_inited) Initialize(device);
-                CreateLines();
+                if (bLinesChanged)
+                {
+                    CreateLines();
+                    bLinesChanged = false;
+                }
                 
                 this.device.RenderState.CullMode = Cull.None;
 
@@ -489,6 +599,7 @@ namespace InfoVizProject
                 // Get the maximum and minimum for all data fields
                 float[] maxData = new float[data.GetLength((int)this.DataSourceAxis)],
                     minData = new float[data.GetLength((int)this.DataSourceAxis)];
+
                 for (int iData = 0; iData < data.GetLength((int)this.DataSourceAxis); ++iData)
                 {
                     loc[(int)this.DataSourceAxis] = iData;
@@ -500,6 +611,8 @@ namespace InfoVizProject
                         {
                             loc[(int)this.TimeSourceAxis] = iTime;
                             float val = (float)data.GetValue(loc);
+                            if (float.IsNaN(val) || float.IsInfinity(val))
+                                continue;
                             if (val > fMaxData)
                                 fMaxData = val;
                             if (val < fMinData)
@@ -514,7 +627,7 @@ namespace InfoVizProject
                 for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
                 {
                     loc[(int)this.LineSourceAxis] = iLine;
-                    Line l = new Line();
+                    Line l = new Line(this.Zoom);
                     Vector4[] lData = new Vector4[data.GetLength((int)this.TimeSourceAxis)];
                     for (int iTime = 0; iTime < data.GetLength((int)this.TimeSourceAxis); iTime++)
                     {
@@ -542,8 +655,13 @@ namespace InfoVizProject
                         {
                             loc[(int)this.DataSourceAxis] = this.DataLineThicknessIndex;
                             float val = (float)data.GetValue(loc);
-                            lData[iTime].Z = (val - minData[this.DataLineThicknessIndex]) / (maxData[this.DataLineThicknessIndex] - minData[this.DataLineThicknessIndex]);
-                            lData[iTime].Z *= realScale;
+                            if (float.IsNaN(val) || float.IsInfinity(val))
+                                lData[iTime].Z = 0.5f * realScale;
+                            else
+                            {
+                                lData[iTime].Z = (val - minData[this.DataLineThicknessIndex]) / (maxData[this.DataLineThicknessIndex] - minData[this.DataLineThicknessIndex]);
+                                lData[iTime].Z *= realScale;
+                            }
                         }
                         else lData[iTime].Z = 0.5f*realScale;
 
@@ -552,6 +670,13 @@ namespace InfoVizProject
                     l.Data = lData;
                     lines.Add(l);
                 }
+
+                for (int i = 0; i < this.selectedIndexes.Count; ++i)
+                    if (this.selectedIndexes[i] > this.lines.Count)
+                    {
+                        this.selectedIndexes.RemoveAt(i);
+                        i--;
+                    }
             }
         }
     }
