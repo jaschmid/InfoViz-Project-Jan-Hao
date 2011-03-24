@@ -213,11 +213,11 @@ namespace InfoVizProject
                     this.mousedown[0] = false;
                     if (!this.translating)
                     {
-                        this.selectedItems = new List<int>();
-                        this.selectedItems.Add(this.lineLayer.GetClosestLine(e.Location.X, e.Location.Y));
+                        List<int> selected = new List<int>();
+                        selected.Add(this.lineLayer.GetClosestLine(e.Location.X, e.Location.Y));
+                        this.parent.SetSelectedIndexes(selected);
                         SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
-                        eventArgs.SelectedItems = this.selectedItems;
-                        this.lineLayer.SetSelectedIndexes(this.selectedItems);
+                        eventArgs.SelectedItems = selected;
                         this.SelectionChanged(this, eventArgs);
                     }
                 }
@@ -297,9 +297,9 @@ namespace InfoVizProject
                     selected.Add(old);
                 }
                 this.SelectedItems = selected;
-                this.lineLayer.SetSelectedIndexes(this.selectedItems);
+                this.parent.SetSelectedIndexes(selected);
                 SelectionUpdatedEventArgs eventArgs = new SelectionUpdatedEventArgs();
-                eventArgs.SelectedItems = this.selectedItems;
+                eventArgs.SelectedItems = selected;
                 this.SelectionChanged(this, eventArgs);
             }
 
