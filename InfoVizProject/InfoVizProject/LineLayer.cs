@@ -23,7 +23,7 @@ namespace InfoVizProject
             {
                 
                 private Vector4[] data;
-                public CustomVertex.PositionOnly[] Vertices
+                public CustomVertex.PositionColored[] Vertices
                 {
                     private set;
                     get;
@@ -51,9 +51,27 @@ namespace InfoVizProject
                     }
                 }
 
-                public Line(float zoom)
+                private Viewport viewport;
+                public Viewport Viewport
+                {
+                    set
+                    {
+                        viewport = value;
+                        BuildLines();
+                    }
+                    get
+                    {
+                        return viewport;
+                    }
+                }
+
+                private Color[] colors;
+
+                public Line(float zoom,Viewport vp, Color[] colors)
                 {
                     this.zoom = zoom;
+                    this.viewport = vp;
+                    this.colors = colors;
                 }
 
                 private void BuildLines()
@@ -64,7 +82,7 @@ namespace InfoVizProject
                         return;
                     }
 
-                    this.Vertices = new CustomVertex.PositionOnly[data.Length * 2];
+                    this.Vertices = new CustomVertex.PositionColored[data.Length * 2];
                     this.PositionData = new Vector2[data.Length];
 
                     // start values
@@ -72,13 +90,15 @@ namespace InfoVizProject
                     Vector4 v = data[index+1]-data[index];
                     float angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
-                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                     this.Vertices[index * 2 + 0].Z = 0.5f;
+                    this.Vertices[index * 2 + 0].Color = this.colors[index].ToArgb();
 
-                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
-                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                     this.Vertices[index * 2 + 1].Z = 0.5f;
+                    this.Vertices[index * 2 + 1].Color = this.colors[index].ToArgb();
 
                     this.PositionData[index].X = (float)this.data[index].X;
                     this.PositionData[index].Y = (float)this.data[index].Y;
@@ -89,13 +109,15 @@ namespace InfoVizProject
                         v = data[index + 1] - data[index - 1];
                         angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                        this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
-                        this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
+                        this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                        this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                         this.Vertices[index * 2 + 0].Z = 0.5f;
+                        this.Vertices[index * 2 + 0].Color = this.colors[index].ToArgb();
 
-                        this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
-                        this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
+                        this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                        this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                         this.Vertices[index * 2 + 1].Z = 0.5f;
+                        this.Vertices[index * 2 + 1].Color = this.colors[index].ToArgb();
 
                         this.PositionData[index].X = (float)this.data[index].X;
                         this.PositionData[index].Y = (float)this.data[index].Y;
@@ -106,13 +128,15 @@ namespace InfoVizProject
                     v = data[index] - data[index - 1];
                     angle = (float)System.Math.Atan2(v.Y, v.X);
 
-                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom;
-                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 0].X = (float)this.data[index].X + (float)Math.Cos(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                    this.Vertices[index * 2 + 0].Y = (float)this.data[index].Y + (float)Math.Sin(angle - Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                     this.Vertices[index * 2 + 0].Z = 0.5f;
+                    this.Vertices[index * 2 + 0].Color = this.colors[index].ToArgb();
 
-                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom;
-                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom;
+                    this.Vertices[index * 2 + 1].X = (float)this.data[index].X + (float)Math.Cos(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Width;
+                    this.Vertices[index * 2 + 1].Y = (float)this.data[index].Y + (float)Math.Sin(angle + Math.PI / 2) * data[index].Z / Zoom / Viewport.Height;
                     this.Vertices[index * 2 + 1].Z = 0.5f;
+                    this.Vertices[index * 2 + 1].Color = this.colors[index].ToArgb();
 
                     this.PositionData[index].X = (float)this.data[index].X;
                     this.PositionData[index].Y = (float)this.data[index].Y;
@@ -251,6 +275,19 @@ namespace InfoVizProject
                             minDistance = thisDistance;
                     }
                     return minDistance;
+                }
+            }
+
+            private ColorMap colorMap;
+            private Color[] timeColors;
+            override public ColorMap ColorMap 
+            {
+                get { return colorMap; }
+                set
+                {
+                    this.colorMap =value;
+                    if(this.Input != null)
+                        this.timeColors = value.GetColors(this.Input.GetDataCube().GetAxisLength(this.TimeSourceAxis));
                 }
             }
 
@@ -498,14 +535,23 @@ namespace InfoVizProject
             }
 
             private Viewport viewport;
+            private Viewport old_viewport;
 
             bool bLinesChanged = false;
 
             protected override void Render(Device device)
             {
+
                 if (!_inited) Initialize(device);
-                if (bLinesChanged)
+                if (bLinesChanged || this.old_viewport.GetHashCode() != device.Viewport.GetHashCode())
                 {
+                    this.old_viewport = device.Viewport;
+
+                    this.viewport = this.old_viewport;
+                    this.viewport.Width -= (int)this.XAxisSpacing;
+                    this.viewport.Height -= (int)this.YAxisSpacing;
+                    this.viewport.X += (int)this.XAxisSpacing;
+
                     CreateLines();
                     bLinesChanged = false;
                 }
@@ -523,20 +569,14 @@ namespace InfoVizProject
 
                 Viewport oldView = this.device.Viewport;
 
-                this.viewport = oldView;
-                this.viewport.Width -= (int)this.XAxisSpacing;
-                this.viewport.Height -= (int)this.YAxisSpacing;
-                this.viewport.X += (int)this.XAxisSpacing;
 
                 this.device.Viewport = this.viewport;
-                this.device.VertexFormat = CustomVertex.PositionOnly.Format;
+                this.device.VertexFormat = CustomVertex.PositionColored.Format;
                 this.device.Transform.Projection = Matrix.OrthoLH(1.0f, 1.0f, 0.01f, 100.0f);
                 this.device.Transform.View = Matrix.LookAtLH(new Vector3(1.0f / 2, 1.0f / 2, -10.0f),
                                                                 new Vector3(1.0f / 2, 1.0f / 2, 0.0f),
                                                                 new Vector3(0.0f, 1.0f, 0.0f));
                 this.device.Transform.World = Matrix.Scaling(Zoom,Zoom,1.0f) * Matrix.Translation(this.Translation.X/this.viewport.Width,this.Translation.Y/this.viewport.Height,0.0f);
-                this.device.RenderState.DiffuseMaterialSource = ColorSource.Material;
-                this.device.RenderState.EmissiveMaterialSource = ColorSource.Material;
                 this.device.RenderState.Lighting = true;
                 
                 for(int i = 0;i<this.lines.Count;++i)
@@ -549,12 +589,13 @@ namespace InfoVizProject
                     }
                     else if (this.ColorMap != null)
                     {
-                        mat.Emissive = this.ColorMap.GetColor(i);
-                        mat.Diffuse = this.ColorMap.GetColor(i);
-                        mat.Ambient = this.ColorMap.GetColor(i);
+                        this.device.RenderState.DiffuseMaterialSource = ColorSource.Color1;
+                        this.device.RenderState.EmissiveMaterialSource = ColorSource.Color1;
                     }
                     else
                     {
+                        this.device.RenderState.DiffuseMaterialSource = ColorSource.Material;
+                        this.device.RenderState.EmissiveMaterialSource = ColorSource.Material;
                         mat.Emissive = Color.Black;
                         mat.Diffuse = Color.Black;
                         mat.Ambient = Color.Black;
@@ -563,6 +604,8 @@ namespace InfoVizProject
 
                     // Draws the apropriate line in the color specified by the colormap
                     this.device.DrawIndexedUserPrimitives(PrimitiveType.TriangleStrip, 0, l.Vertices.Length, l.Vertices.Length - 2, l.FillIndices, false, l.Vertices);
+                    this.device.RenderState.DiffuseMaterialSource = ColorSource.Material;
+                    this.device.RenderState.EmissiveMaterialSource = ColorSource.Material;
                     this.device.Material = edge;
                     this.device.DrawIndexedUserPrimitives(PrimitiveType.LineStrip, 0, l.Vertices.Length, l.Vertices.Length, l.EdgeIndices, false, l.Vertices);
                 }
@@ -627,7 +670,7 @@ namespace InfoVizProject
                 for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
                 {
                     loc[(int)this.LineSourceAxis] = iLine;
-                    Line l = new Line(this.Zoom);
+                    Line l = new Line(this.Zoom,this.viewport,this.timeColors);
                     Vector4[] lData = new Vector4[data.GetLength((int)this.TimeSourceAxis)];
                     for (int iTime = 0; iTime < data.GetLength((int)this.TimeSourceAxis); iTime++)
                     {
@@ -649,7 +692,7 @@ namespace InfoVizProject
                         }
                         else lData[iTime].Y = 0.5f;
 
-                        float realScale = DataLineThicknessScale / (this.Control.AbsoluteSize.Width + this.Control.AbsoluteSize.Height) * 4.0f;
+                        float realScale = DataLineThicknessScale;
 
                         if (this.DataLineThicknessIndex >= 0)
                         {
