@@ -44,8 +44,8 @@
             this.comboBox_choropleth = new System.Windows.Forms.ComboBox();
             this.trackBarYearSelecter = new System.Windows.Forms.TrackBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.toolTipChoropleth = new System.Windows.Forms.ToolTip(this.components);
             this.BarGraphContainer = new System.Windows.Forms.SplitContainer();
+            this.toolTipChoropleth = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -186,7 +186,7 @@
             this.ClientSize = new System.Drawing.Size(784, 562);
             this.Controls.Add(this.splitContainer1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "World Explorer";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
