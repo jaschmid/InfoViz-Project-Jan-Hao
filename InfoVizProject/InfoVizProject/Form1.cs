@@ -54,6 +54,7 @@ namespace InfoVizProject
 
         private ExcelDataProvider excelDataProvider;
         private YearSliceDataTransformer yearSliceDataTransformer;
+        private YearSliceDataTransformer unfilteredYearSliceDataTransformer;
         private LogDataTransformer logDataTransformer;
 
         private ChoroplethMap choroplethMap;  // world map component
@@ -65,6 +66,8 @@ namespace InfoVizProject
         private StringIndexMapper stringIndexMapper;
 
         private ParallelCoordinatesPlot parallelCoordinatesPlot;
+
+        private FilterDataTransformer dataFilterTransformer;
 
         private ContextMenu userMenu;
 
@@ -213,24 +216,85 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             parallelCoordinatesPlot = new ParallelCoordinatesPlot();
-            
-            parallelCoordinatesPlot.Input = excelDataProvider;
+
+            parallelCoordinatesPlot.Headers = excelDataProvider.ColumnHeaders;
+            parallelCoordinatesPlot.Input = unfilteredYearSliceDataTransformer;
             parallelCoordinatesPlot.ColorMap = colorMap;
 
+            parallelCoordinatesPlot.FilterChanged += new EventHandler(parallelCoordinatesPlot_FilterChanged);
+
+            UpdateFilter();
             
         }
 
-        
+        private void UpdateFilter()
+        {
+            float[] min = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
+            float[] max = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
+
+            
+            float[] axis_min = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
+            float[] axis_max = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
+
+            List<float> lowerPos = parallelCoordinatesPlot.FilterLayer.GetLowerSliderPositions();
+            List<float> upperPos = parallelCoordinatesPlot.FilterLayer.GetUpperSliderPositions();
+
+            for (int i = 0; i < min.Length; ++i)
+            {
+                float min_axis, max_axis;
+                parallelCoordinatesPlot.GetAxisMaxMin(i, out max_axis, out min_axis);
+                axis_min[i] = (float)Math.Log(min_axis);
+                axis_max[i] = (float)Math.Log(max_axis);
+
+                if (lowerPos.Count == min.Length && upperPos.Count == max.Length)
+                {
+                    min[i] = lowerPos[i] * (max_axis - min_axis) + min_axis;
+                    max[i] = upperPos[i] * (max_axis - min_axis) + min_axis;
+                }
+                else
+                {
+                    min[i] = min_axis;
+                    max[i] = max_axis;
+                }
+            }
+
+
+            this.dataFilterTransformer.MaxValues = max;
+            this.dataFilterTransformer.MinValues = min;
+            this.dataFilterTransformer.CommitChanges();
+            this.yearSliceDataTransformer.CommitChanges();
+            this.logDataTransformer.CommitChanges();
+
+            this.choroplethMap.Invalidate();
+            this.component.BuildLines();
+            this.component.Invalidate();
+        }
+
+        void parallelCoordinatesPlot_FilterChanged(object sender, EventArgs e)
+        {
+            UpdateFilter();
+        }
+
+
 
         private void InitializeDataTransformer()
         {
             //throw new NotImplementedException();
+
+            this.dataFilterTransformer = new FilterDataTransformer();
+            this.dataFilterTransformer.Input = excelDataProvider;
+            this.dataFilterTransformer.CurrentlySelectedYear = 1960;
+
             yearSliceDataTransformer = new YearSliceDataTransformer();
-            yearSliceDataTransformer.Input = excelDataProvider;
+            yearSliceDataTransformer.Input = this.dataFilterTransformer;
             yearSliceDataTransformer.CurrentSelectedYear = 1960;
+
+            unfilteredYearSliceDataTransformer = new YearSliceDataTransformer();
+            unfilteredYearSliceDataTransformer.Input = this.excelDataProvider;
+            unfilteredYearSliceDataTransformer.CurrentSelectedYear = 1960;
             
             logDataTransformer = new LogDataTransformer();
-            logDataTransformer.Input = excelDataProvider;
+            logDataTransformer.Input = this.dataFilterTransformer;
         }
 
         private void ControlComponentHandle()
@@ -291,12 +355,14 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
             choroplethMap.Invalidate();
+            parallelCoordinatesPlot.Invalidate();
         }
 
         void interactiveColorLegend_ColorEdgeValuesChanged(object sender, EventArgs e)
         {
             //throw new NotImplementedException();
             choroplethMap.Invalidate();
+            parallelCoordinatesPlot.Invalidate();
         }
 
         void interactiveColorLegend_ValueSliderValuesChanged(object sender, EventArgs e)
@@ -304,6 +370,7 @@ namespace InfoVizProject
             //throw new NotImplementedException();
             
             choroplethMap.Invalidate();
+            parallelCoordinatesPlot.Invalidate();
             
         }
 
@@ -327,6 +394,7 @@ namespace InfoVizProject
             viewManager.Add(component, splitContainer2.Panel2);
             viewManager.Add(this.tableLensA.tablelens, this.BarGraphContainer.Panel1);
             viewManager.Add(this.tableLensB.tablelens, this.BarGraphContainer.Panel2);
+            viewManager.Add(this.parallelCoordinatesPlot, this.FilterContainer.Panel2);
             viewManager.InvalidateAll();
 
         }
@@ -554,11 +622,18 @@ namespace InfoVizProject
         {
             //throw new System.NotImplementedException();
             this.textBoxYear.Text = this.trackBarYearSelecter.Value.ToString();
-            yearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
-            yearSliceDataTransformer.CommitChanges();
+            this.dataFilterTransformer.CurrentlySelectedYear = this.trackBarYearSelecter.Value;
+            this.yearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
+            this.unfilteredYearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
+            UpdateFilter();
+            this.yearSliceDataTransformer.CommitChanges();
+            this.unfilteredYearSliceDataTransformer.CommitChanges();
+
             colorMap.Input = yearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
-            
+
+            float[] old_edges = interactiveColorLegend.EdgeValues;
+
             colorMap.Invalidate();
             interactiveColorLegend.ColorMap = colorMap;
             float min = 0;
@@ -568,6 +643,8 @@ namespace InfoVizProject
 
             interactiveColorLegend.MaxValue = max;
             interactiveColorLegend.MinValue = min;
+
+            interactiveColorLegend.EdgeValues = old_edges;
 
             viewManager.InvalidateAll();
         }

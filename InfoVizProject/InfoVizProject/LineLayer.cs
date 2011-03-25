@@ -177,20 +177,24 @@ namespace InfoVizProject
                     {
                         float p1Dist = GetDistanceToPoint(line[i].X, line[i].Y);
                         float p2Dist = GetDistanceToPoint(line[i + 1].X, line[i + 1].Y);
-                        float short_dist = Math.Min(p1Dist, p2Dist);
-                        float long_dist = Math.Max(p1Dist, p2Dist);
 
-                        if (long_dist < fMaxDistance)
+                        if (!float.IsNaN(p1Dist) && !float.IsNaN(p2Dist) && !float.IsInfinity(p1Dist) && !float.IsInfinity(p2Dist))
                         {
-                            //entire length is closer
-                            length += (float)(line[i + 1] - line[i]).Length();
-                        }
-                        else if (short_dist > fMaxDistance)
-                            continue; //none of it is closer
-                        else
-                        {
-                            float pCloser = (fMaxDistance - short_dist) / (long_dist - short_dist);
-                            length += pCloser * (float)(line[i + 1] - line[i]).Length();
+                            float short_dist = Math.Min(p1Dist, p2Dist);
+                            float long_dist = Math.Max(p1Dist, p2Dist);
+
+                            if (long_dist < fMaxDistance)
+                            {
+                                //entire length is closer
+                                length += (float)(line[i + 1] - line[i]).Length();
+                            }
+                            else if (short_dist > fMaxDistance)
+                                continue; //none of it is closer
+                            else
+                            {
+                                float pCloser = (fMaxDistance - short_dist) / (long_dist - short_dist);
+                                length += pCloser * (float)(line[i + 1] - line[i]).Length();
+                            }
                         }
                     }
 
@@ -203,7 +207,7 @@ namespace InfoVizProject
                     for (int i = 0; i < this.PositionData.Length - 1; ++i)
                     {
                         float d= (this.PositionData[i + 1] - this.PositionData[i]).Length();
-                        if (!float.IsNaN(d))
+                        if (!float.IsNaN(d) && !float.IsInfinity(d))
                             result += d;
                     }
                     return result;
@@ -219,6 +223,9 @@ namespace InfoVizProject
 
                 public float GetDistanceToPoint(float cx, float cy)
                 {
+                    if (float.IsNaN(cx) || float.IsNaN(cy) || float.IsInfinity(cx) || float.IsInfinity(cy))
+                        return float.NaN;
+
                     float minDistance = float.MaxValue;
                     for (int i = 0; i < this.PositionData.Length - 1; ++i)
                     {
@@ -227,6 +234,11 @@ namespace InfoVizProject
                         float ay = this.PositionData[i].Y;
                         float bx = this.PositionData[i+1].X;
                         float by = this.PositionData[i+1].Y;
+
+                        if (float.IsNaN(ax) || float.IsNaN(ay) || float.IsInfinity(ax) || float.IsInfinity(ay))
+                            continue;
+                        if (float.IsNaN(bx) || float.IsNaN(by) || float.IsInfinity(bx) || float.IsInfinity(by))
+                            continue;
 
                         float r_numerator = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
                         float r_denomenator = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
@@ -274,6 +286,8 @@ namespace InfoVizProject
                         if (thisDistance < minDistance)
                             minDistance = thisDistance;
                     }
+                    if (minDistance == float.MaxValue)
+                        return float.NaN;
                     return minDistance;
                 }
             }
@@ -433,6 +447,16 @@ namespace InfoVizProject
             }
 
             public Vector2 Translation
+            {
+                get;
+                set;
+            }
+            public float[] DataMin
+            {
+                get;
+                set;
+            }
+            public float[] DataMax
             {
                 get;
                 set;
@@ -626,7 +650,7 @@ namespace InfoVizProject
                 this.device.Viewport = oldView;
             }
 
-            private void CreateLines()
+            public void CreateLines()
             {
                 // Check for problems with the input
                 if (Input == null || Input.GetDataCube() == null || Input.GetDataCube().DataArray == null) return;
@@ -640,31 +664,42 @@ namespace InfoVizProject
                 int[] loc = new int[3];
 
                 // Get the maximum and minimum for all data fields
-                float[] maxData = new float[data.GetLength((int)this.DataSourceAxis)],
+
+                float[] maxData = this.DataMax,
+                        minData = this.DataMin;
+
+                if (this.DataMin == null || this.DataMax == null)
+                {
+                    maxData = new float[data.GetLength((int)this.DataSourceAxis)];
                     minData = new float[data.GetLength((int)this.DataSourceAxis)];
 
-                for (int iData = 0; iData < data.GetLength((int)this.DataSourceAxis); ++iData)
-                {
-                    loc[(int)this.DataSourceAxis] = iData;
-                    float fMaxData = float.MinValue, fMinData = float.MaxValue;
-                    for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
+                    for (int iData = 0; iData < data.GetLength((int)this.DataSourceAxis); ++iData)
                     {
-                        loc[(int)this.LineSourceAxis] = iLine;
-                        for (int iTime = 0; iTime < data.GetLength((int)this.TimeSourceAxis); iTime++)
+                        loc[(int)this.DataSourceAxis] = iData;
+                        float fMaxData = float.MinValue, fMinData = float.MaxValue;
+                        for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)
                         {
-                            loc[(int)this.TimeSourceAxis] = iTime;
-                            float val = (float)data.GetValue(loc);
-                            if (float.IsNaN(val) || float.IsInfinity(val))
-                                continue;
-                            if (val > fMaxData)
-                                fMaxData = val;
-                            if (val < fMinData)
-                                fMinData = val;
+                            loc[(int)this.LineSourceAxis] = iLine;
+                            for (int iTime = 0; iTime < data.GetLength((int)this.TimeSourceAxis); iTime++)
+                            {
+                                loc[(int)this.TimeSourceAxis] = iTime;
+                                float val = (float)data.GetValue(loc);
+                                if (float.IsNaN(val) || float.IsInfinity(val))
+                                    continue;
+                                if (val > fMaxData)
+                                    fMaxData = val;
+                                if (val < fMinData)
+                                    fMinData = val;
+                            }
                         }
+                        maxData[iData] = fMaxData;
+                        minData[iData] = fMinData;
                     }
-                    maxData[iData] = fMaxData;
-                    minData[iData] = fMinData;
+
+                    this.DataMin = minData;
+                    this.DataMax = maxData;
                 }
+
                 
                 // Create the line vector arrays
                 for (int iLine = 0; iLine < data.GetLength((int)this.LineSourceAxis); iLine++)

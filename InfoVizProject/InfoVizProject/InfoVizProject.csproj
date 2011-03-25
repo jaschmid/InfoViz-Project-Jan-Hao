@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AxisLayer.cs" />
     <Compile Include="CustomComponent.cs" />
+    <Compile Include="FilterDataTransformer.cs" />
     <Compile Include="InteractionLayer.cs" />
     <Compile Include="LineLayer.cs" />
     <Compile Include="Form1.cs">

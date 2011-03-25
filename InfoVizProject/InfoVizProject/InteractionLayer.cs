@@ -306,7 +306,6 @@ namespace InfoVizProject
                 if (proposed.Count > 0)
                 {
                     selected.Add(proposed[0]);
-                    selected.Add(old);
                 }
                 this.SelectedItems = selected;
                 this.parent.SetSelectedIndexes(selected);

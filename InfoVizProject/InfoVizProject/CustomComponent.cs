@@ -47,6 +47,16 @@ namespace InfoVizProject
         }
 
         // Settings
+        public float[] DataMin
+        {
+            get { return this.lineLayer.DataMin; }
+            set { this.lineLayer.DataMin = value; }
+        }
+        public float[] DataMax
+        {
+            get { return this.lineLayer.DataMax; }
+            set { this.lineLayer.DataMax = value; }
+        }
         public Axis LineSourceAxis
         {
             get{ return this.lineLayer.LineSourceAxis;}
@@ -125,6 +135,11 @@ namespace InfoVizProject
         public bool AllowCustomizeXAxis { set { this.interactionLayer.AllowCustomizeXAxis = value; } get { return this.interactionLayer.AllowCustomizeXAxis; } }
         public bool AllowCustomizeYAxis { set { this.interactionLayer.AllowCustomizeYAxis = value; } get { return this.interactionLayer.AllowCustomizeYAxis; } }
         public bool AllowCustomizeThickness { set { this.interactionLayer.AllowCustomizeThickness = value; } get { return this.interactionLayer.AllowCustomizeThickness; } }
+
+        public void BuildLines()
+        {
+            lineLayer.CreateLines();
+        }
 
         private List<string> dataLabels;
         public List<string> DataLabels

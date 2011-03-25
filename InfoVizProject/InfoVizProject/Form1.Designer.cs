@@ -44,8 +44,9 @@
             this.comboBox_choropleth = new System.Windows.Forms.ComboBox();
             this.trackBarYearSelecter = new System.Windows.Forms.TrackBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.BarGraphContainer = new System.Windows.Forms.SplitContainer();
+            this.FilterContainer = new System.Windows.Forms.SplitContainer();
             this.toolTipChoropleth = new System.Windows.Forms.ToolTip(this.components);
+            this.BarGraphContainer = new System.Windows.Forms.SplitContainer();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -57,6 +58,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
             this.splitContainer3.Panel1.SuspendLayout();
             this.splitContainer3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.FilterContainer)).BeginInit();
+            this.BarGraphContainer.Panel1.SuspendLayout();
+            this.FilterContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.BarGraphContainer)).BeginInit();
             this.BarGraphContainer.SuspendLayout();
             this.SuspendLayout();
@@ -159,24 +163,35 @@
             // 
             // splitContainer3.Panel1
             // 
-            this.splitContainer3.Panel1.Controls.Add(this.BarGraphContainer);
+            this.splitContainer3.Panel1.Controls.Add(this.FilterContainer);
             this.splitContainer3.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer3_Panel1_Paint);
             this.splitContainer3.Panel2Collapsed = true;
             this.splitContainer3.Size = new System.Drawing.Size(277, 562);
             this.splitContainer3.SplitterDistance = 140;
             this.splitContainer3.TabIndex = 0;
             // 
+            // FilterContainer
+            // 
+            this.FilterContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.FilterContainer.Location = new System.Drawing.Point(0, 0);
+            this.FilterContainer.Name = "FilterContainer";
+            this.FilterContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // FilterContainer.Panel1
+            // 
+            this.FilterContainer.Panel1.Controls.Add(this.BarGraphContainer);
+            this.FilterContainer.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer4_Panel1_Paint);
+            this.FilterContainer.Size = new System.Drawing.Size(277, 562);
+            this.FilterContainer.SplitterDistance = 316;
+            this.FilterContainer.TabIndex = 0;
+            // 
             // BarGraphContainer
             // 
             this.BarGraphContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.BarGraphContainer.Location = new System.Drawing.Point(0, 0);
             this.BarGraphContainer.Name = "BarGraphContainer";
-            // 
-            // BarGraphContainer.Panel1
-            // 
-            this.BarGraphContainer.Panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.splitContainer4_Panel1_Paint);
-            this.BarGraphContainer.Size = new System.Drawing.Size(277, 562);
-            this.BarGraphContainer.SplitterDistance = 135;
+            this.BarGraphContainer.Size = new System.Drawing.Size(277, 316);
+            this.BarGraphContainer.SplitterDistance = 134;
             this.BarGraphContainer.TabIndex = 0;
             // 
             // Form1
@@ -200,6 +215,9 @@
             this.splitContainer3.Panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
             this.splitContainer3.ResumeLayout(false);
+            this.BarGraphContainer.Panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.FilterContainer)).EndInit();
+            this.FilterContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.BarGraphContainer)).EndInit();
             this.BarGraphContainer.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -220,6 +238,7 @@
         private System.Windows.Forms.ToolTip toolTipChoropleth;
         private System.Windows.Forms.Label startYearLabel;
         private System.Windows.Forms.Label endYearLabel;
+        private System.Windows.Forms.SplitContainer FilterContainer;
         private System.Windows.Forms.SplitContainer BarGraphContainer;
         
 
