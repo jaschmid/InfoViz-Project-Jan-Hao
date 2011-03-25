@@ -419,7 +419,7 @@ namespace InfoVizProject
             selected.Add(this.dataSelectedIndex);
             this.component.SetSelectedIndexes(selected);
             this.component.UserMenu = this.userMenu;
-            this.component.DataLineThicknessScale = 2.0f;
+            this.component.DataLineThicknessScale = 4.0f;
         }
 
         private void InitializeData()
@@ -440,8 +440,8 @@ namespace InfoVizProject
         private void InitializeColor()
         {
             colorMap = new ColorMap();
-            
-            colorMap.Input = yearSliceDataTransformer.GetDataCube();
+
+            colorMap.Input = this.unfilteredYearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.CadetBlue,Color.GhostWhite));
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.GhostWhite,Color.Red));
@@ -633,10 +633,10 @@ namespace InfoVizProject
             this.yearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
             this.unfilteredYearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
             this.unfilteredYearSliceDataTransformer.CommitChanges();
+            this.parallelCoordinatesPlot.FilterLayer.Filter();
             this.parallelCoordinatesPlot.Invalidate();
             UpdateFilter();
 
-            colorMap.Input = yearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
 
             float[] old_edges = interactiveColorLegend.EdgeValues;
