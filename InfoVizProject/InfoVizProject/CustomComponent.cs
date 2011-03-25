@@ -255,7 +255,7 @@ namespace InfoVizProject
         private void InternalSelectionUpdatedEvent(object sender, SelectionUpdatedEventArgs e)
         {
             this.SelectionChanged(this,e);
-            //this.Invalidate();
+            this.Invalidate();
         }
 
         private LineLayer lineLayer;
