@@ -56,6 +56,7 @@ namespace InfoVizProject
         private YearSliceDataTransformer yearSliceDataTransformer;
         private YearSliceDataTransformer unfilteredYearSliceDataTransformer;
         private LogDataTransformer logDataTransformer;
+        private InterpolatingDataTransformer interpolatingDataTransformer;
 
         private ChoroplethMap choroplethMap;  // world map component
         private MapData mapData;
@@ -78,6 +79,7 @@ namespace InfoVizProject
             public TableLens tablelens;
 
             private ExcelDataProvider excelDataProvider;
+            private IDataCubeProvider data;
 
             private int selectedIndex;
             public int SelectedIndex
@@ -115,9 +117,11 @@ namespace InfoVizProject
                 }
             }
 
-            public TableLensEncapsulator(ExcelDataProvider data)
+            public TableLensEncapsulator(IDataCubeProvider data, ExcelDataProvider excelDataProvider)
             {
-                excelDataProvider = data;
+             
+                this.excelDataProvider = excelDataProvider;
+                this.data = data;
 
                 // color map
                 colorMapForTableLens = new ColorMap();
@@ -127,7 +131,7 @@ namespace InfoVizProject
                 List<int> selected = new List<int>();
                 selected.Add(SelectedIndex);
                 lensDataTransformer = new TransposDataTransformer();
-                lensDataTransformer.Input = excelDataProvider;
+                lensDataTransformer.Input = this.data;
                 lensDataTransformer.SelectedCountry = selected;
                 lensDataTransformer.SelectedIndicator = SelectedIndicator;
                 lensDataTransformer.GetDataCube();
@@ -207,8 +211,8 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
 
-            this.tableLensA = new TableLensEncapsulator(this.excelDataProvider);
-            this.tableLensB = new TableLensEncapsulator(this.excelDataProvider);
+            this.tableLensA = new TableLensEncapsulator(this.interpolatingDataTransformer,this.excelDataProvider);
+            this.tableLensB = new TableLensEncapsulator(this.interpolatingDataTransformer, this.excelDataProvider);
             
         }
 
@@ -232,6 +236,7 @@ namespace InfoVizProject
             float[] min = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
             float[] max = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
 
+            this.parallelCoordinatesPlot.ResetAxisMaxMin();
             
             float[] axis_min = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
             float[] axis_max = new float[this.excelDataProvider.GetDataCube().GetAxisLength(Axis.X)];
@@ -258,7 +263,6 @@ namespace InfoVizProject
                 }
             }
 
-
             this.dataFilterTransformer.MaxValues = max;
             this.dataFilterTransformer.MinValues = min;
             this.dataFilterTransformer.CommitChanges();
@@ -281,8 +285,11 @@ namespace InfoVizProject
         {
             //throw new NotImplementedException();
 
+            this.interpolatingDataTransformer = new InterpolatingDataTransformer();
+            this.interpolatingDataTransformer.Input = excelDataProvider;
+
             this.dataFilterTransformer = new FilterDataTransformer();
-            this.dataFilterTransformer.Input = excelDataProvider;
+            this.dataFilterTransformer.Input = this.interpolatingDataTransformer;
             this.dataFilterTransformer.CurrentlySelectedYear = 1960;
 
             yearSliceDataTransformer = new YearSliceDataTransformer();
@@ -290,7 +297,7 @@ namespace InfoVizProject
             yearSliceDataTransformer.CurrentSelectedYear = 1960;
 
             unfilteredYearSliceDataTransformer = new YearSliceDataTransformer();
-            unfilteredYearSliceDataTransformer.Input = this.excelDataProvider;
+            unfilteredYearSliceDataTransformer.Input = this.interpolatingDataTransformer;
             unfilteredYearSliceDataTransformer.CurrentSelectedYear = 1960;
             
             logDataTransformer = new LogDataTransformer();
@@ -625,9 +632,9 @@ namespace InfoVizProject
             this.dataFilterTransformer.CurrentlySelectedYear = this.trackBarYearSelecter.Value;
             this.yearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
             this.unfilteredYearSliceDataTransformer.CurrentSelectedYear = this.trackBarYearSelecter.Value;
-            UpdateFilter();
-            this.yearSliceDataTransformer.CommitChanges();
             this.unfilteredYearSliceDataTransformer.CommitChanges();
+            this.parallelCoordinatesPlot.Invalidate();
+            UpdateFilter();
 
             colorMap.Input = yearSliceDataTransformer.GetDataCube();
             colorMap.Index = choroplethMapSelectedIndex;
@@ -640,7 +647,6 @@ namespace InfoVizProject
             float max = 0;
             yearSliceDataTransformer.GetDataCube().GetColumnMaxMin(choroplethMapSelectedIndex, out max, out min);
             
-
             interactiveColorLegend.MaxValue = max;
             interactiveColorLegend.MinValue = min;
 

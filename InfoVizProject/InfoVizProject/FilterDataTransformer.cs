@@ -44,7 +44,7 @@ namespace InfoVizProject
                     for (int i = 0; i < sizeX; i++)
                     {
                         float val =inputData[i, j, CurrentlySelectedYear - 1960];
-                        if ((val <= MaxValues[i] && val >= MinValues[i] )|| float.IsNaN(val) || float.IsInfinity(val))
+                        if ((val<= MaxValues[i] && val >= MinValues[i] )|| float.IsNaN(val) || float.IsInfinity(val))
                             continue;
                         else
                         {
