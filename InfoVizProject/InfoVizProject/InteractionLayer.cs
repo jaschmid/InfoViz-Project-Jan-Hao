@@ -248,6 +248,18 @@ namespace InfoVizProject
                             this.findClosest.Enabled = true;
                         this.rClickMenu.MenuItems.Add(this.findClosest);
 
+                        if (this.parent.UserMenu != null)
+                        {
+                            this.rClickMenu.MenuItems.Add("-");
+
+                            foreach (MenuItem i in this.parent.UserMenu.MenuItems)
+                                if (i != null)
+                                {
+                                    this.rClickMenu.MenuItems.Add(i.CloneMenu());
+                                }
+                        }
+
+
                         rClickMenu.Show(this.parent.iRenderTarget, e.Location);
                     }
                 }

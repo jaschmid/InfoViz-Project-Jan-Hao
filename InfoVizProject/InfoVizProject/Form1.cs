@@ -23,14 +23,38 @@ namespace InfoVizProject
 
         private int choroplethMapSelectedIndex;
         private int choroplethMapCurrentYear = 1960;
-        private List<int> mapSelectedIndices = new List<int>();
-        private List<int> dataSelectedIndices = new List<int>(){0,1};
+
+        private int __mapSelectedIndex;
+        private int __dataSelectedIndex = 0;
+        private int mapSelectedIndex
+        {
+            get
+            {
+                return __mapSelectedIndex;
+            }
+            set
+            {
+                __mapSelectedIndex = value;
+                this.stringIndexMapper.TryMapIndex(__mapSelectedIndex, out __dataSelectedIndex);
+            }
+        }
+        private int dataSelectedIndex
+        {
+            get
+            {
+                return __dataSelectedIndex;
+            }
+            set
+            {
+                __dataSelectedIndex = value;
+                this.stringIndexMapper.TryBackwardMapIndex(__dataSelectedIndex, out __mapSelectedIndex);
+            }
+        }
 
 
         private ExcelDataProvider excelDataProvider;
         private YearSliceDataTransformer yearSliceDataTransformer;
         private LogDataTransformer logDataTransformer;
-        private TransposDataTransformer transposeDataTransformer;
 
         private ChoroplethMap choroplethMap;  // world map component
         private MapData mapData;
@@ -41,14 +65,90 @@ namespace InfoVizProject
         private StringIndexMapper stringIndexMapper;
 
         private ParallelCoordinatesPlot parallelCoordinatesPlot;
-        
 
-        private TableLens tablelens;
+        private ContextMenu userMenu;
+
+        private class TableLensEncapsulator
+        {
+            public TransposDataTransformer lensDataTransformer;
+            public ColorMap colorMapForTableLens;
+            public TableLens tablelens;
+
+            private ExcelDataProvider excelDataProvider;
+
+            private int selectedIndex;
+            public int SelectedIndex
+            {
+                get
+                {
+                    return selectedIndex;
+                }
+                set
+                {
+                    selectedIndex = value;
+                    this.lensDataTransformer.SelectedCountry = new List<int>() { selectedIndex };
+                    tablelens.HeadersList = new List<string>() { excelDataProvider.RowIds[selectedIndex] };
+                    this.lensDataTransformer.CommitChanges();
+                    colorMapForTableLens.Invalidate();
+                    this.tablelens.Invalidate();
+                }
+            }
+
+            private int selectedindicator;
+            public int SelectedIndicator
+            {
+
+                get
+                {
+                    return selectedindicator;
+                }
+                set
+                {
+                    selectedindicator = value;
+                    this.lensDataTransformer.SelectedIndicator = selectedindicator;
+                    this.lensDataTransformer.CommitChanges();
+                    colorMapForTableLens.Invalidate();
+                    this.tablelens.Invalidate();
+                }
+            }
+
+            public TableLensEncapsulator(ExcelDataProvider data)
+            {
+                excelDataProvider = data;
+
+                // color map
+                colorMapForTableLens = new ColorMap();
+                colorMapForTableLens.AddColorMapPart(new LinearRgbColorMapPart(Color.Blue, Color.Red));
+
+                // transpos
+                List<int> selected = new List<int>();
+                selected.Add(SelectedIndex);
+                lensDataTransformer = new TransposDataTransformer();
+                lensDataTransformer.Input = excelDataProvider;
+                lensDataTransformer.SelectedCountry = selected;
+                lensDataTransformer.SelectedIndicator = SelectedIndicator;
+                lensDataTransformer.GetDataCube();
+
+                // table lens
+                tablelens = new TableLens();
+                lensDataTransformer.SelectedCountry = new List<int>(){0};
+                tablelens.Input = lensDataTransformer.GetDataCube();
+                colorMapForTableLens.Input = tablelens.Input;
+
+                tablelens.ColorMap = colorMapForTableLens;
+                List<string> countrylist = new List<string>();
+                countrylist.Add(excelDataProvider.RowIds[SelectedIndex]);
+                tablelens.HeadersList = countrylist;
+
+            }
+        };
+
+        private TableLensEncapsulator tableLensA;
+        private TableLensEncapsulator tableLensB;
 
         private ViewManager viewManager;
         private CustomComponent component;
         private ColorMap colorMap;
-        private ColorMap colorMapForTableLens;
 
         public System.EventHandler keydown;
 
@@ -56,6 +156,20 @@ namespace InfoVizProject
         {
             InitializeComponent();
 
+            MenuItem addToA = new MenuItem("Set Selection As View A",
+                delegate(object o, EventArgs e)
+                {
+                    this.setViewA();
+                }
+                );
+            MenuItem addToB = new MenuItem("Set Selection As View B",
+                delegate(object o, EventArgs e)
+                {
+                    this.setViewB();
+                }
+                );
+
+            userMenu = new ContextMenu(new MenuItem[]{ addToA, addToB });
 
 
             InitializeData();
@@ -74,27 +188,24 @@ namespace InfoVizProject
 
             InitializeViewManager();
 
-            
+        }
 
-            
+        private void setViewA()
+        {
+            this.tableLensA.SelectedIndex = this.dataSelectedIndex;
+        }
+
+        private void setViewB()
+        {
+            this.tableLensB.SelectedIndex = this.dataSelectedIndex;
         }
 
         private void InitializeTableLens()
         {
             //throw new NotImplementedException();
-            tablelens = new TableLens();
-            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
-            tablelens.Input = transposeDataTransformer.GetDataCube();
-            colorMapForTableLens.Input = tablelens.Input;
 
-            tablelens.ColorMap = colorMapForTableLens;
-            List<string> countrylist = new List<string>();
-            for (int i = 0; i < mapSelectedIndices.Count; i++)
-            {
-                countrylist.Add(excelDataProvider.RowIds[i]);
-            }
-            tablelens.HeadersList = countrylist;
-            
+            this.tableLensA = new TableLensEncapsulator(this.excelDataProvider);
+            this.tableLensB = new TableLensEncapsulator(this.excelDataProvider);
             
         }
 
@@ -117,11 +228,6 @@ namespace InfoVizProject
             yearSliceDataTransformer = new YearSliceDataTransformer();
             yearSliceDataTransformer.Input = excelDataProvider;
             yearSliceDataTransformer.CurrentSelectedYear = 1960;
-            transposeDataTransformer = new TransposDataTransformer();
-            transposeDataTransformer.Input = excelDataProvider;
-            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
-            transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
-            transposeDataTransformer.GetDataCube();
             
             logDataTransformer = new LogDataTransformer();
             logDataTransformer.Input = excelDataProvider;
@@ -219,7 +325,8 @@ namespace InfoVizProject
             viewManager = new ViewManager(this);
             viewManager.Add(choroplethMap, splitContainer2.Panel1);
             viewManager.Add(component, splitContainer2.Panel2);
-            viewManager.Add(tablelens, splitContainer3.Panel1);
+            viewManager.Add(this.tableLensA.tablelens, this.BarGraphContainer.Panel1);
+            viewManager.Add(this.tableLensB.tablelens, this.BarGraphContainer.Panel2);
             viewManager.InvalidateAll();
 
         }
@@ -233,7 +340,11 @@ namespace InfoVizProject
             this.component.SelectionChanged += new CustomComponent.SelectionUpdatedEventHandler(customComponent_SelectionUpdatedEvent);
             this.component.DataLabels = this.excelDataProvider.ColumnHeaders;
             this.component.SelectedIndexColor = Color.Yellow;
-            this.component.SetSelectedIndexes(this.dataSelectedIndices);
+            List<int> selected = new List<int>();
+            selected.Add(this.dataSelectedIndex);
+            this.component.SetSelectedIndexes(selected);
+            this.component.UserMenu = this.userMenu;
+            this.component.DataLineThicknessScale = 2.0f;
         }
 
         private void InitializeData()
@@ -260,15 +371,11 @@ namespace InfoVizProject
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.CadetBlue,Color.GhostWhite));
             //colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.GhostWhite,Color.Red));
             
-            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(100,100,240),Color.FromArgb(200,200,250)));
-            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(255,200,200),Color.FromArgb(255,50,50)));
-            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.FromArgb(255, 0, 255), Color.FromArgb(200, 0, 200)));
+            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.Blue,Color.LightYellow));
+            colorMap.AddColorMapPart(new LinearRgbColorMapPart(Color.LightYellow,Color.Red));
             
             colorMap.NaNColor = Color.Black;
             //colorMap.AddColorMapPart(new LinearHsvColorMapPart(200,40,0.1f,0.5f));
-            colorMapForTableLens = new ColorMap();
-            
-            colorMapForTableLens.AddColorMapPart(new LinearRgbColorMapPart(Color.White,Color.Red));
             
         }
 
@@ -293,149 +400,132 @@ namespace InfoVizProject
             
             choroplethMap.AddSubComponent(interactiveColorLegend);
             choroplethMap.VizComponentMouseDown += new EventHandler<VizComponentMouseEventArgs>(choroplethMap_VizComponentMouseDown);
+            choroplethMap.VizComponentMouseUp += new EventHandler<VizComponentMouseEventArgs>(choroplethMap_VizComponentMouseUp);
+            choroplethMap.VizComponentMouseMove += new EventHandler<VizComponentMouseEventArgs>(choroplethMap_VizComponentMouseMove);
+            choroplethMap.PositionInternallyChanged += new EventHandler(choroplethMap_PositionInternallyChanged);
+            choroplethMap.ZoomInternallyChanged += new EventHandler(choroplethMap_ZoomInternallyChanged);
         }
-       
 
-        void choroplethMap_VizComponentMouseDown(object sender, VizComponentMouseEventArgs e)
+
+
+        void choroplethMap_VizComponentMouseMove(object sender, VizComponentMouseEventArgs e)
         {
-            //throw new NotImplementedException();
-            this.splitContainer2.Panel1.Focus();
-            
-            this.splitContainer2.Focus();
             Point p = e.MouseEventArgs.Location;
             Vector2 mapCoordinates = choroplethMap.ConvertScreenCoordinatesToMapCoordinates(p);
-            int index = mapData.GetRegionId(mapCoordinates.X,mapCoordinates.Y);
+            int index = mapData.GetRegionId(mapCoordinates.X, mapCoordinates.Y);
             int mappedIndex = 0;
-            stringIndexMapper.TryMapIndex(index,out mappedIndex);
-            
-            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Left &&index > 0 && mappedIndex != -1)
+            stringIndexMapper.TryMapIndex(index, out mappedIndex);
+            if (mappedIndex != -1)
             {
                 gavToolTip.Text = excelDataProvider.RowIds[mappedIndex];
                 gavToolTip.Text += "\n";
                 gavToolTip.Text += excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex] + ":" + yearSliceDataTransformer.GetDataCube().DataArray[choroplethMapSelectedIndex, mappedIndex, 0];
 
+                gavToolTip.Show(p);
+            }
+            else
+                gavToolTip.Hide();
+        }
+
+        private bool drag_begin = false;
+        private Vector2 drag_position = new Vector2();
+        private bool zoom_begin = false;
+        private float zoom_level = new float();
+
+        void choroplethMap_VizComponentMouseUp(object sender, VizComponentMouseEventArgs e)
+        {
+            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Left && !drag_begin)
+            { //throw new NotImplementedException();
+                this.splitContainer2.Panel1.Focus();
+
+                this.splitContainer2.Focus();
+                Point p = e.MouseEventArgs.Location;
+                Vector2 mapCoordinates = choroplethMap.ConvertScreenCoordinatesToMapCoordinates(p);
+                int index = mapData.GetRegionId(mapCoordinates.X, mapCoordinates.Y);
+                int mappedIndex = 0;
+                stringIndexMapper.TryMapIndex(index, out mappedIndex);
+
                 //gavToolTip.SetPosition(new Point(0, 0));
 
-                gavToolTip.Show(p);
 
+                if (index > 0 && mappedIndex != -1)
+                {
+                    gavToolTip.Hide();
 
+                    this.dataSelectedIndex = mappedIndex;
+                    this.mapSelectedIndex = index;
 
+                    List<int> currentSelectedIndexes = mapPolygonLayer.GetSelectedIndexes();
 
+                    List<int> mapSelected = new List<int>() { this.mapSelectedIndex };
+                    mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
+                    mapPolygonLayer.SetSelectedIndexes(mapSelected);
+                    choroplethMap.Invalidate();
+
+                    List<int> dataSelected = new List<int>() { this.dataSelectedIndex };
+                    this.component.SetSelectedIndexes(dataSelected);
+                    this.component.Invalidate();
+                }
             }
-            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Right && index > 0 && mappedIndex != -1)
+            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Right && !zoom_begin)
             {
-                gavToolTip.Hide();
-                if (mapSelectedIndices.Count == 2)
-                {
-                    int temp = mapSelectedIndices[1];
-                    mapSelectedIndices.Clear();
-                    mapSelectedIndices.Add(temp);
+                this.userMenu.Show(this, e.MouseEventArgs.Location);
+            }
+        }
 
-                }
-                if (dataSelectedIndices.Count == 2)
-                {
-                    int temp = dataSelectedIndices[1];
-                    dataSelectedIndices.Clear();
-                    dataSelectedIndices.Add(temp);
-                }
-
-                dataSelectedIndices.Add(mappedIndex);
-                mapSelectedIndices.Add(index);
-
-                transposeDataTransformer.SelectedCountry = dataSelectedIndices;
-                transposeDataTransformer.CommitChanges();
-
-                tablelens.Input = transposeDataTransformer.GetDataCube();
-
-                colorMapForTableLens.Input = tablelens.Input;
-
-                tablelens.ColorMap = colorMapForTableLens;
-                List<string> countrylist = new List<string>();
-                for (int i = 0; i < dataSelectedIndices.Count; i++)
-                {
-                    countrylist.Add(excelDataProvider.RowIds[dataSelectedIndices[i]]);
-                }
-                tablelens.HeadersList = countrylist;
-                tablelens.Invalidate();
-
-                List<int> currentSelectedIndexes = mapPolygonLayer.GetSelectedIndexes();
-
-                
-                mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
-                mapPolygonLayer.SetSelectedIndexes(mapSelectedIndices);
-                choroplethMap.Invalidate();
-                this.component.SetSelectedIndexes(dataSelectedIndices);
-                this.component.Invalidate();
+        void choroplethMap_VizComponentMouseDown(object sender, VizComponentMouseEventArgs e)
+        {
+            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                this.drag_begin = false;
+                this.drag_position = choroplethMap.Position;
+            }
+            if (e.MouseEventArgs.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                this.zoom_begin = false;
+                this.zoom_level = choroplethMap.Zoom;
             }
             
+        }
+        void choroplethMap_ZoomInternallyChanged(object sender, EventArgs e)
+        {
+            if (this.choroplethMap.Zoom != this.zoom_level)
+                this.zoom_begin = true;
+        }
+
+        void choroplethMap_PositionInternallyChanged(object sender, EventArgs e)
+        {
+            if (this.choroplethMap.Position != this.drag_position)
+                this.drag_begin = true;
         }
 
         private void InitializeStringIndexMapper()
         {
             //throw new NotImplementedException();
             stringIndexMapper = new StringIndexMapper(mapData.RegionFullNames, excelDataProvider.RowIds);
-            int mapIndex;
-            this.stringIndexMapper.TryBackwardMapIndex(this.dataSelectedIndices[1],out mapIndex);
-            this.mapSelectedIndices.Add(mapIndex);
-            this.stringIndexMapper.TryBackwardMapIndex(this.dataSelectedIndices[0], out mapIndex);
-            this.mapSelectedIndices.Add(mapIndex);
+            this.stringIndexMapper.TryBackwardMapIndex(this.dataSelectedIndex, out this.__mapSelectedIndex);
         }
 
         private void customComponent_SelectionUpdatedEvent(object sender, CustomComponent.SelectionUpdatedEventArgs e)
         {
             
-            
-            
             foreach (int i in e.SelectedItems)
             {
-                int mappedIndex = i;
+                int mappedIndex;
                 stringIndexMapper.TryBackwardMapIndex(i, out mappedIndex);
-                if (mappedIndex != -1 && i > 0)
+                if (mappedIndex != -1)
                 {
-                    if (mapSelectedIndices.Count == 2)
-                    {
-                        int temp = mapSelectedIndices[1];
-                        mapSelectedIndices.Clear();
-                        mapSelectedIndices.Add(temp);
-
-                    }
-                    mapSelectedIndices.Add(mappedIndex);
-                }
-
-                if(i != -1 && i > 0)
-                {
-                    if (dataSelectedIndices.Count == 2)
-                    {
-                        int temp = dataSelectedIndices[1];
-                        dataSelectedIndices.Clear();
-                        dataSelectedIndices.Add(temp);
-                    }
-
-                    dataSelectedIndices.Add(i);
+                    this.dataSelectedIndex = i;
+                    this.mapSelectedIndex = mappedIndex;
                 }
             }
 
             mapPolygonLayer.SelectedPolygonColor = Color.Yellow;
-            mapPolygonLayer.SetSelectedIndexes(mapSelectedIndices);
+            List<int> selected = new List<int>() { this.mapSelectedIndex };
+            mapPolygonLayer.SetSelectedIndexes(selected);
 
             //this.mapPolygonLayer.Invalidate();
             this.choroplethMap.Invalidate();
-
-            transposeDataTransformer.SelectedCountry = dataSelectedIndices;
-            transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
-            transposeDataTransformer.CommitChanges();
-
-            tablelens.Input = transposeDataTransformer.GetDataCube();
-
-            colorMapForTableLens.Input = tablelens.Input;
-            tablelens.ColorMap = colorMapForTableLens;
-            List<string> countrylist = new List<string>();
-            for (int i = 0; i < dataSelectedIndices.Count; i++)
-            {
-                countrylist.Add(excelDataProvider.RowIds[dataSelectedIndices[i]]);
-            }
-            tablelens.HeadersList = countrylist;
-            tablelens.Invalidate();
         }
 
         private void comboBox_choropleth_SelectedIndexChanged(object sender, EventArgs e)
@@ -443,6 +533,9 @@ namespace InfoVizProject
             //string currentText = comboBox_choropleth.Text;
             choroplethMapSelectedIndex = comboBox_choropleth.SelectedIndex;
             colorMap.Index = choroplethMapSelectedIndex;
+            this.tableLensA.SelectedIndicator = choroplethMapSelectedIndex;
+            this.tableLensB.SelectedIndicator = choroplethMapSelectedIndex;
+
             //mapPolygonLayer.Invalidate();
 
             float min = 0;
@@ -455,9 +548,6 @@ namespace InfoVizProject
 
             interactiveColorLegend.SetHeader(excelDataProvider.ColumnHeaders[choroplethMapSelectedIndex]);
             choroplethMap.Invalidate();
-            transposeDataTransformer.SelectedIndicator = choroplethMapSelectedIndex;
-            transposeDataTransformer.CommitChanges();
-            tablelens.Invalidate();
         }
 
         void trackBarYearSelecter_ValueChanged(object sender, System.EventArgs e)
@@ -480,6 +570,16 @@ namespace InfoVizProject
             interactiveColorLegend.MinValue = min;
 
             viewManager.InvalidateAll();
+        }
+
+        private void splitContainer3_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void splitContainer4_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
 
     }

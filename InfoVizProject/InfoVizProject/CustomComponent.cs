@@ -23,7 +23,7 @@ namespace InfoVizProject
 
             public IDataCubeProvider Input { get; set; }
 
-            public ColorMap ColorMap { get; set; }
+            virtual public ColorMap ColorMap { get; set; }
         }
 
         private List<Layer> layers;
@@ -40,6 +40,11 @@ namespace InfoVizProject
             set { foreach (Layer layer in layers) layer.ColorMap = value; }
         }
 
+        public System.Windows.Forms.ContextMenu UserMenu
+        {
+            get;
+            set;
+        }
 
         // Settings
         public Axis LineSourceAxis
